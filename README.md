@@ -68,11 +68,11 @@ kubectl cluster-info --context kind-enterprise-ai
 
 ### 2. Install ArgoCD
 
-Create a namespace for ArgoCD and apply the official installation manifests:
+Create a namespace for ArgoCD and apply the official installation manifests. **Note:** We must use `--server-side` apply to bypass size limits for ArgoCD's large Custom Resource Definitions (CRDs) like ApplicationSets.
 
 ```bash
 kubectl create namespace argocd
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl apply -n argocd --server-side --force-conflicts -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 ```
 
 Wait for all ArgoCD pods to be ready (this may take a few minutes):
