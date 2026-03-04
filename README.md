@@ -98,3 +98,31 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443
 Open your browser and navigate to [https://localhost:8080](https://localhost:8080).
 - **Username:** `admin`
 - **Password:** (the password retrieved in the step above)
+
+## Deploying the Platform via GitOps (App of Apps)
+
+We use the "App of Apps" pattern (with ApplicationSets) to manage the entire platform stack declaratively. The root application points to a Helm chart in this repository that generates ApplicationSets for all our platform tools (e.g., Crossplane).
+
+### 1. Update the Repository URL
+Before applying the root app, make sure to update `argocd-root.yaml` with your actual Git repository URL:
+
+```yaml
+# argocd-root.yaml
+spec:
+  source:
+    repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
+    targetRevision: main
+    path: charts/argocd-appsets
+```
+
+Make sure to commit and push your changes so ArgoCD can fetch them from Git.
+
+### 2. Apply the Root Application
+
+Apply the `argocd-root.yaml` manifest to your cluster. This will tell ArgoCD to deploy our ApplicationSet Helm chart, which in turn will automatically install **Crossplane** and any future tools we add to the chart:
+
+```bash
+kubectl apply -f argocd-root.yaml
+```
+
+Once applied, you can log into the ArgoCD UI to see `root-appsets` appear, which will subsequently spin up the `crossplane` application!

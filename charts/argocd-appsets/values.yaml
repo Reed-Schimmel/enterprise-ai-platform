@@ -1,0 +1,4 @@
+crossplane:
+  enabled: true
+  targetRevision: "1.15.0"
+  namespace: crossplane-system
