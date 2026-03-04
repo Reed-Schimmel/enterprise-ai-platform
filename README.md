@@ -50,7 +50,51 @@ Verify the installation:
 kind version
 ```
 
-## Next Steps
-1. Bootstrap the local `kind` cluster.
-2. Install ArgoCD into the cluster.
-3. Configure ArgoCD ApplicationSets for core infrastructure and AI applications.
+## Bootstrap the Cluster and Install ArgoCD
+
+### 1. Create the `kind` Cluster
+
+Create a new local Kubernetes cluster named `enterprise-ai` using `kind`:
+
+```bash
+kind create cluster --name enterprise-ai
+```
+
+Verify the cluster is running and your `kubectl` context is set correctly:
+
+```bash
+kubectl cluster-info --context kind-enterprise-ai
+```
+
+### 2. Install ArgoCD
+
+Create a namespace for ArgoCD and apply the official installation manifests:
+
+```bash
+kubectl create namespace argocd
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+```
+
+Wait for all ArgoCD pods to be ready (this may take a few minutes):
+
+```bash
+kubectl wait --for=condition=Ready pods --all -n argocd --timeout=300s
+```
+
+### 3. Access the ArgoCD UI
+
+Retrieve the initial auto-generated admin password:
+
+```bash
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
+```
+
+Port-forward the ArgoCD server service to your local machine:
+
+```bash
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+```
+
+Open your browser and navigate to [https://localhost:8080](https://localhost:8080).
+- **Username:** `admin`
+- **Password:** (the password retrieved in the step above)
