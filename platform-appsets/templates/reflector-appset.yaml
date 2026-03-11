@@ -1,0 +1,39 @@
+{{- if .Values.reflector.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: reflector
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: reflector-appset
+spec:
+  generators:
+    - list:
+        elements:
+          - cluster: in-cluster
+            url: https://kubernetes.default.svc
+  template:
+    metadata:
+      name: 'reflector-{{ "{{cluster}}" }}'
+      labels:
+        app.kubernetes.io/name: reflector
+      annotations:
+        argocd.argoproj.io/sync-wave: "-1"
+    spec:
+      project: default
+      source:
+        repoURL: 'https://emberstack.github.io/helm-charts'
+        targetRevision: {{ .Values.reflector.targetRevision | quote }}
+        chart: reflector
+        helm:
+          releaseName: reflector
+      destination:
+        server: '{{ "{{url}}" }}'
+        namespace: {{ .Values.reflector.namespace | quote }}
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+{{- end }}

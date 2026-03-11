@@ -1,0 +1,20 @@
+global: {}
+
+crossplane:
+  enabled: true
+  targetRevision: "1.15.0"
+  namespace: crossplane-system
+
+reflector:
+  enabled: true
+  namespace: reflector
+  targetRevision: "7.1.285"
+
+litellm:
+  enabled: false
+
+langfuse:
+  enabled: false
+
+llmClients:
+  enabled: false
