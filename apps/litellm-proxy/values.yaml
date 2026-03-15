@@ -1,4 +1,14 @@
 # https://github.com/BerriAI/litellm/blob/main/deploy/charts/litellm-helm/values.yaml
 litellm-helm:
-  imagePullSecrets:
-    - name: docker-image-pull-secret
+  global:
+    imagePullSecrets:
+      - name: docker-image-pull-secret
+  image:
+    # Use "ghcr.io/berriai/litellm-database" for optimized image with database
+    repository: ghcr.io/berriai/litellm-non_root # Required to run as non-root
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    # https://github.com/berriai/litellm/pkgs/container/litellm-non_root/592203661?tag=main-v1.80.7-nightly
+    tag: "main-v1.80.7-nightly"
+
+  nameOverride: "litellm"
