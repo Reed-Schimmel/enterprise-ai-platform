@@ -18,8 +18,24 @@ set +o allexport
 # 1. Create the kind cluster
 if ! kind get clusters | grep -q "^enterprise-ai$"; then
   echo "Creating kind cluster 'enterprise-ai'..."
-  # TODO: the command below only works for serverless podman, create a condition checker to run the correct command depending on the env of the computer.
-  systemd-run --scope --user -p "Delegate=yes" kind create cluster --name enterprise-ai
+  # Determine the container provider and if it is rootless podman
+  KIND_PROVIDER="${KIND_EXPERIMENTAL_PROVIDER}"
+  if [ -z "$KIND_PROVIDER" ]; then
+    if command -v docker >/dev/null 2>&1 && docker --version | grep -qi podman; then
+      KIND_PROVIDER="podman"
+    elif ! command -v docker >/dev/null 2>&1 && command -v podman >/dev/null 2>&1; then
+      KIND_PROVIDER="podman"
+    else
+      KIND_PROVIDER="docker"
+    fi
+  fi
+
+  if [ "$KIND_PROVIDER" = "podman" ] && command -v podman >/dev/null 2>&1 && podman info 2>/dev/null | grep -qi "rootless: true"; then
+    echo "Detected rootless podman, running with systemd-run..."
+    systemd-run --scope --user -p "Delegate=yes" kind create cluster --name enterprise-ai
+  else
+    kind create cluster --name enterprise-ai
+  fi
 else
   echo "kind cluster 'enterprise-ai' already exists."
 fi
