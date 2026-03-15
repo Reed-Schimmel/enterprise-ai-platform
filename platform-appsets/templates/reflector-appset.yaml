@@ -22,7 +22,7 @@ spec:
     spec:
       project: default
       source:
-        repoURL: 'https://emberstack.github.io/helm-charts'
+        repoURL: https://emberstack.github.io/helm-charts
         targetRevision: {{ .Values.reflector.targetRevision | quote }}
         chart: reflector
         helm:

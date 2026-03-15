@@ -8,7 +8,7 @@ metadata:
 spec:
   generators:
     - git:
-        repoURL: 'https://github.com/Reed-Schimmel/enterprise-ai-platform.git'
+        repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
         revision: litellm-proxy
         files:
           - path: configurations/**/litellm-proxy-config.yaml

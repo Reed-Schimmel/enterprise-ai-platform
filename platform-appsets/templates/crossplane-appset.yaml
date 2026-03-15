@@ -20,7 +20,7 @@ spec:
     spec:
       project: default
       source:
-        repoURL: 'https://charts.crossplane.io/stable'
+        repoURL: https://charts.crossplane.io/stable
         targetRevision: {{ .Values.crossplane.targetRevision | quote }}
         chart: crossplane
         helm:

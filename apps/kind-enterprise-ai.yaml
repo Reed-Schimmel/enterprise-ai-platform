@@ -6,17 +6,17 @@ metadata:
 spec:
   project: default
   sources:
-    - repoURL: 'https://github.com/Reed-Schimmel/enterprise-ai-platform.git'
+    - repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
       targetRevision: litellm-proxy
       path: platform-appsets
       helm:
         valueFiles:
           - $values/configurations/kind/kind-enterprise-ai/platform-values.yaml
-    - repoURL: 'https://github.com/Reed-Schimmel/enterprise-ai-platform.git'
+    - repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
       targetRevision: litellm-proxy
       ref: values
   destination:
-    server: 'https://kubernetes.default.svc'
+    server: https://kubernetes.default.svc
     namespace: argocd
   syncPolicy:
     automated:
