@@ -1,0 +1,6 @@
+targetRevision: main
+config: |
+  crossplane:
+    enabled: true
+    namespace: crossplane-system
+    targetRevision: "2.2.0"
