@@ -9,7 +9,7 @@ spec:
   generators:
     - git:
       repoURL: 'https://github.com/Reed-Schimmel/enterprise-ai-platform.git'
-      revision: main # TODO: why isn't this "targetRevision"
+      revision: litellm-proxy # TODO: why isn't this "targetRevision"
       files:
         - path: configurations/**/litellm-proxy-config.yaml
   goTemplate: true
