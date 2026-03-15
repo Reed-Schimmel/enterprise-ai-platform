@@ -103,9 +103,3 @@ We use the "App of Apps" pattern combined with Helm's "Multiple Sources" feature
 3. It applies the specific configuration values for the kind cluster located at `configurations/kind-enterprise-ai/platform-values.yaml`.
 
 This decoupling allows you to use the exact same `platform-appsets` code to deploy to a production EKS cluster simply by creating a new `apps/eks-prod.yaml` and `configurations/eks-prod/platform-values.yaml`.
-
----
-
-# TODO:
-- the bootstrap git repo creds don't work. I have to go into the web ui and add the info. solution: https://stackoverflow.com/a/78451087
-- work with opencode to fix the reflector not syncing
