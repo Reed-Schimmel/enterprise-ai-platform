@@ -8,4 +8,4 @@ crossplane:
 reflector:
   enabled: true
   namespace: reflector
-  targetRevision: "7.1.285"
+  targetRevision: "10.0.20"
