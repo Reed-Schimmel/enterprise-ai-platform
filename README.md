@@ -4,12 +4,22 @@ This project serves as a comprehensive showcase of modern DevOps engineering and
 
 ## Architecture Overview
 
-The platform is built on a local Kubernetes stack using **kind** (Kubernetes IN Docker). All infrastructure and application deployments are managed declaratively using **ArgoCD**, leveraging **ApplicationSets** for dynamic and scalable GitOps delivery.
+The platform is designed to be highly portable, but local development is streamlined using a **kind** (Kubernetes IN Docker) cluster. All infrastructure and application deployments are managed declaratively using **ArgoCD**, leveraging **ApplicationSets** for dynamic and scalable GitOps delivery.
+
+### Directory Structure
+```text
+.
+├── apps/                    # GitOps entry points (App of Apps)
+├── bootstrap/               # Local dev & kind-specific initialization scripts
+├── configurations/          # Cluster-specific values (e.g., kind vs. EKS)
+└── platform-appsets/        # Core Helm Chart deploying all platform tools via AppSets
+```
 
 Core components include:
 - **Local Kubernetes:** `kind` cluster for development and testing.
 - **GitOps Engine:** ArgoCD for continuous delivery.
 - **Infrastructure as Code:** Kubernetes manifests deployed via ArgoCD ApplicationSets.
+- **Secret Management:** Emberstack Reflector for synchronizing pull secrets across namespaces.
 - **AI/Gen AI Stack:** (To be implemented - e.g., LLM serving, vector databases, etc.)
 
 ## Prerequisites
@@ -18,21 +28,12 @@ Before starting, ensure you have **Docker** installed and running on your system
 
 ### Installing `kind`
 
-#### macOS
-The easiest way to install `kind` on macOS is using Homebrew:
+#### macOS or Linux (with Homebrew)
 ```bash
 brew install kind
 ```
 
-#### Linux
-Homebrew will also work on linux as of 2026.
-
-```bash
-brew install kind
-```
-
-You can also install without Homebrew.
-
+#### Linux (Manual)
 To install `kind` on Linux, download the release binary, make it executable, and move it to your PATH:
 
 ```bash
@@ -45,41 +46,33 @@ chmod +x ./kind
 sudo mv ./kind /usr/local/bin/kind
 ```
 
-Verify the installation:
-```bash
-kind version
-```
+## Quick Start: Bootstrapping the Local Cluster
 
-## Bootstrap the Cluster and Install ArgoCD
+We have provided a unified bootstrap script to automatically spin up your local environment, configure secrets, and install ArgoCD.
 
-### 1. Create the `kind` Cluster
+### 1. Configure Credentials
 
-Create a new local Kubernetes cluster named `enterprise-ai` using `kind`:
+Copy the example environment file and fill in your credentials:
 
 ```bash
-kind create cluster --name enterprise-ai
+cp bootstrap/.env.example bootstrap/.env
 ```
+Edit `bootstrap/.env` with your GitHub Username, Personal Access Token (PAT), and Docker Hub credentials.
 
-Verify the cluster is running and your `kubectl` context is set correctly:
+### 2. Run the Bootstrap Script
+
+Execute the automated setup:
 
 ```bash
-kubectl cluster-info --context kind-enterprise-ai
+./bootstrap/setup-kind.sh
 ```
 
-### 2. Install ArgoCD
-
-Create a namespace for ArgoCD and apply the official installation manifests. **Note:** We must use `--server-side` apply to bypass size limits for ArgoCD's large Custom Resource Definitions (CRDs) like ApplicationSets.
-
-```bash
-kubectl create namespace argocd
-kubectl apply -n argocd --server-side --force-conflicts -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-```
-
-Wait for all ArgoCD pods to be ready (this may take a few minutes):
-
-```bash
-kubectl wait --for=condition=Ready pods --all -n argocd --timeout=300s
-```
+This script will:
+1. Create a `kind` cluster named `enterprise-ai`.
+2. Install ArgoCD.
+3. Inject your GitHub PAT into ArgoCD so it can read this repository.
+4. Create a Docker Pull Secret and configure **Reflector** to copy it to all new namespaces.
+5. Apply the root GitOps Application.
 
 ### 3. Access the ArgoCD UI
 
@@ -99,47 +92,20 @@ Open your browser and navigate to [https://localhost:8080](https://localhost:808
 - **Username:** `admin`
 - **Password:** (the password retrieved in the step above)
 
-## Deploying the Platform via GitOps (App of Apps)
+Right now the argocd repo secret doesn't connect correctly. So navigate to https://localhost:8080/settings/repos and enter the credentials for the git repo. Then on the apps page, click refresh on the root-appsets.
 
-We use the "App of Apps" pattern (with ApplicationSets) to manage the entire platform stack declaratively. The root application points to a Helm chart in this repository that generates ApplicationSets for all our platform tools (e.g., Crossplane).
+## Understanding the GitOps Flow
 
-### 1. Update the Repository URL
-Before applying the root app, make sure to update `argocd-root.yaml` with your actual Git repository URL:
+We use the "App of Apps" pattern combined with Helm's "Multiple Sources" feature. 
 
-```yaml
-# argocd-root.yaml
-spec:
-  source:
-    repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
-    targetRevision: main
-    path: charts/argocd-appsets
-```
+1. **The Root App (`apps/kind-enterprise-ai.yaml`)** points to the local cluster.
+2. It fetches the core Helm chart from `platform-appsets/`.
+3. It applies the specific configuration values for the kind cluster located at `configurations/kind-enterprise-ai/platform-values.yaml`.
 
-Make sure to commit and push your changes so ArgoCD can fetch them from Git.
-
-### 2. Apply the Root Application
-
-Apply the `argocd-root.yaml` manifest to your cluster. This will tell ArgoCD to deploy our ApplicationSet Helm chart, which in turn will automatically install **Crossplane** and any future tools we add to the chart:
-
-```bash
-kubectl apply -f argocd-root.yaml
-```
-
-Once applied, you can log into the ArgoCD UI to see `root-appsets` appear, which will subsequently spin up the `crossplane` application!
+This decoupling allows you to use the exact same `platform-appsets` code to deploy to a production EKS cluster simply by creating a new `apps/eks-prod.yaml` and `configurations/eks-prod/platform-values.yaml`.
 
 ---
 
-## 🛠 Project Status & Handoff Summary
-
-### Work Completed So Far
-- **Project Scaffolded:** Created the `README.md` with system prerequisites and manual installation guides for setting up a local `kind` cluster.
-- **ArgoCD Installed & Debugged:** Successfully installed ArgoCD to the `enterprise-ai` kind cluster. Resolved a CRD size limit issue by applying the stable manifest using Kubernetes `--server-side` apply.
-- **GitOps App of Apps Architecture:** Established the core GitOps mechanism using an ArgoCD Application (`argocd-root.yaml`) pointing to a custom Helm chart (`charts/argocd-appsets/`).
-- **Crossplane Deployed:** Added `crossplane` as an ApplicationSet within the Helm chart and verified that ArgoCD successfully synced and provisioned it within the cluster.
-
-### Upcoming Tasks / Next Steps
-1. **Configure Crossplane:** Setup Providers (e.g. AWS, GCP, Azure, or Kubernetes) and ProviderConfigs so Crossplane can manage infrastructure.
-2. **Deploy Gen AI Infrastructure:** Implement necessary databases (e.g., PostgreSQL with pgvector, Milvus, Qdrant) via Crossplane or ArgoCD ApplicationSets.
-3. **Deploy LLM Serving Stack:** Add tools like vLLM, Ollama, or Triton Inference Server using ArgoCD ApplicationSets.
-4. **Ingress & Networking:** Add an ingress controller (like Ingress-NGINX) and potentially cert-manager so the AI endpoints can be securely accessed locally.
-5. **Automation Scripts:** (Optional) Convert the manual bootstrap commands documented in the README into a seamless `bootstrap.sh` script for faster teardown/rebuilds.
+# TODO:
+- the bootstrap git repo creds don't work. I have to go into the web ui and add the info. solution: https://stackoverflow.com/a/78451087
+- work with opencode to fix the reflector not syncing

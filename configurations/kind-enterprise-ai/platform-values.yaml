@@ -1,0 +1,11 @@
+global: {}
+
+crossplane:
+  enabled: true
+  namespace: crossplane-system
+  targetRevision: "2.2.0"
+
+reflector:
+  enabled: true
+  namespace: reflector
+  targetRevision: "10.0.20"
