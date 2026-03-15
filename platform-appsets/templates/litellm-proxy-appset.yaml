@@ -1,0 +1,45 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: litellm-proxy
+  namespace: litellm-proxy # TODO: maybe remove to let argocd autogen it
+  labels:
+    app.kubernetes.io/name: litellm-proxy-appset
+spec:
+  generators:
+    - git:
+      repoURL: 'https://github.com/Reed-Schimmel/enterprise-ai-platform.git'
+      revision: main # TODO: why isn't this "targetRevision"
+      files:
+        - path: configurations/**/litellm-proxy-config.yaml
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  template:
+    metadata:
+      name: {{`"{{ .path.basenameNormalized }}-litellm-proxy"`}}
+      labels:
+        cloud-provider: {{`"{{ index .path.segments 2 }}"`}}
+        app.kubernetes.io/name: litellm-proxy
+      annotations:
+        argocd.argoproj.io/sync-wave: "5" # TODO: anything > -1
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git'
+        targetRevision: "litellm-proxy" # TODO: make dynamic from config values
+        path: apps/litellm-proxy
+        helm:
+          releaseName: litellm-proxy
+          valueFiles:
+            - values.yaml
+          values: |-
+            {{`{{ .config }}`}}
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: litellm-proxy
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true

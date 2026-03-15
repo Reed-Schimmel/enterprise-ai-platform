@@ -1,0 +1,3 @@
+targetRevision: litellm-proxy # TODO: revert to main before PR
+config: |
+  litellm-helm:

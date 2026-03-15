@@ -98,6 +98,12 @@ We use the "App of Apps" pattern combined with Helm's "Multiple Sources" feature
 
 1. **The Root App (`apps/kind-enterprise-ai.yaml`)** points to the local cluster.
 2. It fetches the core Helm chart from `platform-appsets/`.
-3. It applies the specific configuration values for the kind cluster located at `configurations/kind-enterprise-ai/platform-values.yaml`.
+3. It applies the specific configuration values for the kind cluster located at `configurations/kind/kind-enterprise-ai/platform-values.yaml`.
 
 This decoupling allows you to use the exact same `platform-appsets` code to deploy to a production EKS cluster simply by creating a new `apps/eks-prod.yaml` and `configurations/eks-prod/platform-values.yaml`.
+
+---
+
+## TODO:
+- before PR: find and replace `targetRevision: litellm-proxy` with `targetRevision: main`
+    - search for `revision` too
