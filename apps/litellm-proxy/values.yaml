@@ -1,0 +1,4 @@
+# https://github.com/BerriAI/litellm/blob/main/deploy/charts/litellm-helm/values.yaml
+litellm-helm:
+  imagePullSecrets:
+    - name: docker-image-pull-secret
