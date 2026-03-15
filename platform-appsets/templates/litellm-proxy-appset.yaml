@@ -8,10 +8,10 @@ metadata:
 spec:
   generators:
     - git:
-      repoURL: 'https://github.com/Reed-Schimmel/enterprise-ai-platform.git'
-      revision: litellm-proxy # TODO: why isn't this "targetRevision"
-      files:
-        - path: configurations/**/litellm-proxy-config.yaml
+        repoURL: 'https://github.com/Reed-Schimmel/enterprise-ai-platform.git'
+        revision: litellm-proxy # TODO: why isn't this "targetRevision"
+        files:
+          - path: configurations/**/litellm-proxy-config.yaml
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
   template:
