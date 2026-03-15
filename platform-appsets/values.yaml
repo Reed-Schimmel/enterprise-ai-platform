@@ -2,13 +2,13 @@ global: {}
 
 crossplane:
   enabled: true
-  targetRevision: "1.15.0"
   namespace: crossplane-system
+  targetRevision: "2.2.0"
 
 reflector:
   enabled: true
   namespace: reflector
-  targetRevision: "7.1.285"
+  targetRevision: "10.0.20"
 
 litellm:
   enabled: false

@@ -18,7 +18,8 @@ set +o allexport
 # 1. Create the kind cluster
 if ! kind get clusters | grep -q "^enterprise-ai$"; then
   echo "Creating kind cluster 'enterprise-ai'..."
-  kind create cluster --name enterprise-ai
+  # TODO: the command below only works for serverless podman, create a condition checker to run the correct command depending on the env of the computer.
+  systemd-run --scope --user -p "Delegate=yes" kind create cluster --name enterprise-ai
 else
   echo "kind cluster 'enterprise-ai' already exists."
 fi
@@ -51,6 +52,10 @@ stringData:
   password: \${GITHUB_PAT}
   username: \${GITHUB_USERNAME}
 EOF
+
+
+# argocd repo add https://github.com/Reed-Schimmel/enterprise-ai-platform.git --username ${GITHUB_PAT} --password ${GITHUB_USERNAME}
+
 
 # 4. Create Docker Image Pull Secret with Reflector Annotations
 echo "Creating Docker image pull secret and configuring Reflector..."

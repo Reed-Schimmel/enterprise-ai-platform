@@ -92,6 +92,8 @@ Open your browser and navigate to [https://localhost:8080](https://localhost:808
 - **Username:** `admin`
 - **Password:** (the password retrieved in the step above)
 
+Right now the argocd repo secret doesn't connect correctly. So navigate to https://localhost:8080/settings/repos and enter the credentials for the git repo. Then on the apps page, click refresh on the root-appsets.
+
 ## Understanding the GitOps Flow
 
 We use the "App of Apps" pattern combined with Helm's "Multiple Sources" feature. 

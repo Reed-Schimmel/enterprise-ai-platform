@@ -7,13 +7,13 @@ spec:
   project: default
   sources:
     - repoURL: 'https://github.com/Reed-Schimmel/enterprise-ai-platform.git'
-      targetRevision: cluster-bootstrap
+      targetRevision: main
       path: platform-appsets
       helm:
         valueFiles:
           - $values/configurations/kind-enterprise-ai/platform-values.yaml
     - repoURL: 'https://github.com/Reed-Schimmel/enterprise-ai-platform.git'
-      targetRevision: cluster-bootstrap
+      targetRevision: main
       ref: values
   destination:
     server: 'https://kubernetes.default.svc'
