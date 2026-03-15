@@ -105,5 +105,8 @@ This decoupling allows you to use the exact same `platform-appsets` code to depl
 ---
 
 ## TODO:
-- before PR: find and replace `targetRevision: litellm-proxy` with `targetRevision: main`
+- [ ] turn off bd migrations while iterating
+- [ ] Turn db migrations back on before merging to main
+- [ ] before PR: find and replace `targetRevision: litellm-proxy` with `targetRevision: main`
     - search for `revision` too
+- [ ] Unifi the naming. Right now we have `in-cluster-APPNAME` and `kind-enterprise-ai-APPNAME`
