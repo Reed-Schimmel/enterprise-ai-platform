@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
   name: litellm-proxy
-  namespace: litellm-proxy # TODO: maybe remove to let argocd autogen it
+  namespace: argocd
   labels:
     app.kubernetes.io/name: litellm-proxy-appset
 spec:
