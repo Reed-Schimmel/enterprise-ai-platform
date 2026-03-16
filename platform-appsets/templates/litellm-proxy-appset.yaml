@@ -23,7 +23,7 @@ spec:
       annotations:
         argocd.argoproj.io/sync-wave: "5" # TODO: anything > -1
     spec:
-      ignoreDifferences:
+      ignoreDifferences: # TODO: litellm-proxy-postgresql secret seems to be regened still.
         - kind: Secret
           namespace: litellm-proxy
           name: litellm-proxy-dbcredentials
