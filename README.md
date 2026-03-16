@@ -102,6 +102,12 @@ We use the "App of Apps" pattern combined with Helm's "Multiple Sources" feature
 
 This decoupling allows you to use the exact same `platform-appsets` code to deploy to a production EKS cluster simply by creating a new `apps/eks-prod.yaml` and `configurations/eks-prod/platform-values.yaml`.
 
+
+## Access the LiteLLM-Proxy UI
+1. `kubectl port-forward -n litellm-proxy svc/litellm-proxy 4000:4000`
+2. http://localhost:4000/ui
+3. Login with "admin" and password: `kubectl get secret -n litellm-proxy litellm-proxy-masterkey -o jsonpath="{.data.masterkey}" | base64 -d; echo`
+
 ---
 
 ## TODO:
