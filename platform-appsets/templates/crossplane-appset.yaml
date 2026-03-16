@@ -14,13 +14,13 @@ spec:
             url: https://kubernetes.default.svc
   template:
     metadata:
-      name: 'crossplane-{{ "{{" }}cluster{{ "}}" }}'
+      name: '{{ "{{" }}cluster{{ "}}" }}-crossplane'
       labels:
         app.kubernetes.io/name: crossplane
     spec:
       project: default
       source:
-        repoURL: 'https://charts.crossplane.io/stable'
+        repoURL: https://charts.crossplane.io/stable
         targetRevision: {{ .Values.crossplane.targetRevision | quote }}
         chart: crossplane
         helm:

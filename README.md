@@ -92,20 +92,24 @@ Open your browser and navigate to [https://localhost:8080](https://localhost:808
 - **Username:** `admin`
 - **Password:** (the password retrieved in the step above)
 
-Right now the argocd repo secret doesn't connect correctly. So navigate to https://localhost:8080/settings/repos and enter the credentials for the git repo. Then on the apps page, click refresh on the root-appsets.
-
 ## Understanding the GitOps Flow
 
 We use the "App of Apps" pattern combined with Helm's "Multiple Sources" feature. 
 
 1. **The Root App (`apps/kind-enterprise-ai.yaml`)** points to the local cluster.
 2. It fetches the core Helm chart from `platform-appsets/`.
-3. It applies the specific configuration values for the kind cluster located at `configurations/kind-enterprise-ai/platform-values.yaml`.
+3. It applies the specific configuration values for the kind cluster located at `configurations/kind/kind-enterprise-ai/platform-values.yaml`.
 
 This decoupling allows you to use the exact same `platform-appsets` code to deploy to a production EKS cluster simply by creating a new `apps/eks-prod.yaml` and `configurations/eks-prod/platform-values.yaml`.
 
+
+## Access the LiteLLM-Proxy UI
+1. `kubectl port-forward -n litellm-proxy svc/litellm-proxy 4000:4000`
+2. http://localhost:4000/ui
+3. Login with "admin" and password: `kubectl get secret -n litellm-proxy litellm-proxy-masterkey -o jsonpath="{.data.masterkey}" | base64 -d; echo`
+
 ---
 
-# TODO:
-- the bootstrap git repo creds don't work. I have to go into the web ui and add the info. solution: https://stackoverflow.com/a/78451087
-- work with opencode to fix the reflector not syncing
+## TODO:
+- [ ] Unifi the naming. Right now we have `in-cluster-APPNAME` and `kind-enterprise-ai-APPNAME`
+- [ ] Think about dev/prod setup
