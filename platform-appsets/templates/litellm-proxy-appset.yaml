@@ -21,7 +21,7 @@ spec:
         cloud-provider: {{`"{{ index .path.segments 2 }}"`}}
         app.kubernetes.io/name: litellm-proxy
       annotations:
-        argocd.argoproj.io/sync-wave: "5" # TODO: anything > -1
+        argocd.argoproj.io/sync-wave: "5" # TODO: after crossplane components LiteLLM depends on
     spec:
       ignoreDifferences: # TODO: litellm-proxy-postgresql secret seems to be regened still.
         - kind: Secret

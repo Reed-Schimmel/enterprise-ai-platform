@@ -1,3 +1,3 @@
-targetRevision: main # TODO: revert to main before PR
+targetRevision: main
 config: |
   litellm-helm:
