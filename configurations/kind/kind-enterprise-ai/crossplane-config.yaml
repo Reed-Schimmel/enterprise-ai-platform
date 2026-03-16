@@ -1,4 +1,4 @@
-targetRevision: litellm-proxy
+targetRevision: main
 config: |
   crossplane:
     enabled: true
