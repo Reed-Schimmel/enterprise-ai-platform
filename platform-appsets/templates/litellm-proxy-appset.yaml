@@ -23,6 +23,18 @@ spec:
       annotations:
         argocd.argoproj.io/sync-wave: "5" # TODO: anything > -1
     spec:
+      ignoreDifferences:
+        - kind: Secret
+          namespace: litellm-proxy
+          name: litellm-proxy-dbcredentials
+          jsonPointers:
+          - /data
+          - /metadata/annotations
+        - kind: Secret
+          namespace: litellm-proxy
+          name: litellm-proxy-masterkey
+          jsonPointers:
+          - /data
       project: default
       source:
         repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
@@ -43,3 +55,4 @@ spec:
           selfHeal: true
         syncOptions:
           - CreateNamespace=true
+          - RespectIgnoreDifferences=true # IMPORTANT
