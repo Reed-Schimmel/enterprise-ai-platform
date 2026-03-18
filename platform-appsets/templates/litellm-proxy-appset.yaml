@@ -38,7 +38,7 @@ spec:
       project: default
       source:
         repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
-        targetRevision: "litellm-proxy" # TODO: make dynamic from config values
+        targetRevision: main
         path: apps/litellm-proxy
         helm:
           releaseName: litellm-proxy
