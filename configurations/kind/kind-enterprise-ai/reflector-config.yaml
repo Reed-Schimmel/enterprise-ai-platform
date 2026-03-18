@@ -1,4 +1,4 @@
-targetRevision: main
+targetRevision: app-seps
 config: |
   reflector:
     enabled: true
