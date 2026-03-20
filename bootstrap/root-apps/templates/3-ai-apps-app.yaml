@@ -9,7 +9,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
-    targetRevision: main
+    targetRevision: secret-manager
     path: platform/ai-apps
   destination:
     server: https://kubernetes.default.svc
