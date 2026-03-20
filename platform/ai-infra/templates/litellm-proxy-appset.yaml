@@ -11,7 +11,7 @@ spec:
         repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
         revision: app-seps
         files:
-          - path: configurations/**/litellm-proxy-config.yaml
+          - path: configurations/**/ai-infra/litellm-proxy-config.yaml
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
   template:

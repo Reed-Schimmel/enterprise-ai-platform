@@ -109,7 +109,7 @@ kubectl annotate secret docker-image-pull-secret \
 
 # 5. Apply the root App of Apps
 echo "Applying ArgoCD root application..."
-kubectl apply -f apps/kind-enterprise-ai.yaml
+kubectl apply -f bootstrap/root.yaml
 
 echo "====================================================================="
 echo "Bootstrap complete!"
