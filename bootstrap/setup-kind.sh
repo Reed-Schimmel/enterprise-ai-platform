@@ -48,10 +48,6 @@ echo "Installing ArgoCD..."
 kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
 kubectl apply -n argocd --server-side --force-conflicts -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
-# Patch ArgoCD ConfigMap to support custom health assessments for Application CRDs (essential for sync-waves in App of Apps)
-echo "Patching ArgoCD ConfigMap for Application health assessment..."
-kubectl apply -f bootstrap/argocd-cm-patch.yaml
-
 echo "Waiting for ArgoCD deployments to be available..."
 kubectl wait --for=condition=Available deployment --all -n argocd --timeout=300s
 echo "Waiting for ArgoCD statefulsets to rollout..."
