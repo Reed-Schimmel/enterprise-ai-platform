@@ -1,4 +1,3 @@
-{{- if .Values.crossplane.enabled }}
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
@@ -8,30 +7,30 @@ metadata:
     app.kubernetes.io/name: crossplane-appset
 spec:
   generators:
-    - list:
-        elements:
-          - cluster: in-cluster
-            url: https://kubernetes.default.svc
+    - git:
+        repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
+        revision: app-seps
+        files:
+          - path: configurations/**/cluster-infra/crossplane-config.yaml
   template:
     metadata:
-      name: '{{ "{{" }}cluster{{ "}}" }}-crossplane'
+      name: '{{ index .path.segments 2 }}-crossplane'
       labels:
         app.kubernetes.io/name: crossplane
     spec:
       project: default
       source:
         repoURL: https://charts.crossplane.io/stable
-        targetRevision: {{ .Values.crossplane.targetRevision | quote }}
+        targetRevision: '{{ .targetRevision }}'
         chart: crossplane
         helm:
           releaseName: crossplane
       destination:
-        server: '{{ "{{" }}url{{ "}}" }}'
-        namespace: {{ .Values.crossplane.namespace | quote }}
+        server: https://kubernetes.default.svc
+        namespace: '{{ .namespace }}'
       syncPolicy:
         automated:
           prune: true
           selfHeal: true
         syncOptions:
           - CreateNamespace=true
-{{- end }}

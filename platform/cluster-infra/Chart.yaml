@@ -1,4 +1,0 @@
-apiVersion: v2
-name: cluster-infra
-version: 0.1.0
-description: Tier 1 - Cluster core infrastructure

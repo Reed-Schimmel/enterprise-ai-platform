@@ -1,4 +1,3 @@
-{{- if .Values.reflector.enabled }}
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
@@ -8,13 +7,14 @@ metadata:
     app.kubernetes.io/name: reflector-appset
 spec:
   generators:
-    - list:
-        elements:
-          - cluster: in-cluster
-            url: https://kubernetes.default.svc
+    - git:
+        repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
+        revision: app-seps
+        files:
+          - path: configurations/**/cluster-infra/reflector-config.yaml
   template:
     metadata:
-      name: '{{ "{{cluster}}" }}-reflector'
+      name: '{{ index .path.segments 2 }}-reflector'
       labels:
         app.kubernetes.io/name: reflector
       annotations:
@@ -23,17 +23,16 @@ spec:
       project: default
       source:
         repoURL: https://emberstack.github.io/helm-charts
-        targetRevision: {{ .Values.reflector.targetRevision | quote }}
+        targetRevision: '{{ .targetRevision }}'
         chart: reflector
         helm:
           releaseName: reflector
       destination:
-        server: '{{ "{{url}}" }}'
-        namespace: {{ .Values.reflector.namespace | quote }}
+        server: https://kubernetes.default.svc
+        namespace: '{{ .namespace }}'
       syncPolicy:
         automated:
           prune: true
           selfHeal: true
         syncOptions:
           - CreateNamespace=true
-{{- end }}

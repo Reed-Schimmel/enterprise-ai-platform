@@ -1,6 +1,2 @@
-targetRevision: app-seps
-config: |
-  crossplane:
-    enabled: true
-    namespace: crossplane-system
-    targetRevision: "2.2.0"
+targetRevision: "2.2.0"
+namespace: "crossplane-system"

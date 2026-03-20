@@ -1,6 +1,2 @@
-targetRevision: app-seps
-config: |
-  reflector:
-    enabled: true
-    namespace: reflector
-    targetRevision: "10.0.20"
+targetRevision: "10.0.20"
+namespace: "reflector"
