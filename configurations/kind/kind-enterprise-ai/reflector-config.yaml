@@ -1,6 +1,0 @@
-targetRevision: main
-config: |
-  reflector:
-    enabled: true
-    namespace: reflector
-    targetRevision: "10.0.20"

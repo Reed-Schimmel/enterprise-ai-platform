@@ -111,5 +111,8 @@ This decoupling allows you to use the exact same `platform-appsets` code to depl
 ---
 
 ## TODO:
+- [ ] Open WebUI Helm chart as an ai-app https://github.com/open-webui/helm-charts
+- [ ] Get Credentials into LiteLLM-Proxy
+    - Start with Gemini API key injection during bootstrap.
 - [ ] Unifi the naming. Right now we have `in-cluster-APPNAME` and `kind-enterprise-ai-APPNAME`
 - [ ] Think about dev/prod setup

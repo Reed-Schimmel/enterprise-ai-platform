@@ -11,14 +11,14 @@ spec:
         repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
         revision: main
         files:
-          - path: configurations/**/litellm-proxy-config.yaml
+          - path: configurations/**/ai-infra/litellm-proxy-config.yaml
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
   template:
     metadata:
-      name: {{`"{{ .path.basenameNormalized }}-litellm-proxy"`}}
+      name: '{{ .path.basenameNormalized }}-litellm-proxy'
       labels:
-        cloud-provider: {{`"{{ index .path.segments 2 }}"`}}
+        cloud-provider: '{{ index .path.segments 2 }}'
         app.kubernetes.io/name: litellm-proxy
       annotations:
         argocd.argoproj.io/sync-wave: "5" # TODO: after crossplane components LiteLLM depends on
@@ -45,7 +45,7 @@ spec:
           valueFiles:
             - values.yaml
           values: |-
-            {{`{{ .config }}`}}
+            {{ .config }}
       destination:
         server: https://kubernetes.default.svc
         namespace: litellm-proxy
