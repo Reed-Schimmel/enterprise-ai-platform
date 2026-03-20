@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: vault
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: vault-appset
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
+        revision: secret-manager
+        files:
+          - path: configurations/**/cluster-infra/vault-config.yaml
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  template:
+    metadata:
+      name: '{{ index .path.segments 2 }}-vault'
+      labels:
+        app.kubernetes.io/name: vault
+    spec:
+      project: default
+      source:
+        repoURL: https://helm.releases.hashicorp.com
+        targetRevision: '{{ .targetRevision }}'
+        chart: vault
+        helm:
+          releaseName: vault
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{ .namespace }}'
+      syncPolicy:
+        automated:
+          prune: false
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
