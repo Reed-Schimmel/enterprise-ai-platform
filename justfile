@@ -56,3 +56,13 @@ prepare-pr:
     fi
     
     echo "Done! Remote PR is updated, and you are back to work."
+
+recreate-kind:
+    #!/usr/bin/env bash
+    set -e # Stops the script immediately if a critical command fails
+
+    echo "Renaming cluster enterprise-ai..."
+    kind delete cluster --name enterprise-ai
+
+    echo "Recreating kind cluster with ./bootstrap/setup-kind.sh"
+    ./bootstrap/setup-kind.sh
