@@ -12,6 +12,8 @@ spec:
         revision: app-seps
         files:
           - path: configurations/**/cluster-infra/reflector-config.yaml
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
   template:
     metadata:
       name: '{{ index .path.segments 2 }}-reflector'
