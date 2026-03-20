@@ -1,5 +1,6 @@
 namespace: vault
 targetRevision: "0.32.0"
-server:
-  dev:
-    enabled: true
+values:
+  server:
+    dev:
+      enabled: true
