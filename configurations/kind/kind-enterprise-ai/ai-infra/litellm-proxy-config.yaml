@@ -1,3 +1,3 @@
-targetRevision: app-seps
+targetRevision: main
 config: |
   litellm-helm:
