@@ -12,7 +12,7 @@ The platform is designed to be highly portable, but local development is streaml
 ├── apps/                    # GitOps entry points (App of Apps)
 ├── bootstrap/               # Local dev & kind-specific initialization scripts
 ├── configurations/          # Cluster-specific values (e.g., kind vs. EKS)
-└── platform-appsets/        # Core Helm Chart deploying all platform tools via AppSets
+└── platform                 # Core Helm Chart deploying all platform tools via AppSets
 ```
 
 Core components include:
@@ -102,6 +102,11 @@ We use the "App of Apps" pattern combined with Helm's "Multiple Sources" feature
 
 This decoupling allows you to use the exact same `platform-appsets` code to deploy to a production EKS cluster simply by creating a new `apps/eks-prod.yaml` and `configurations/eks-prod/platform-values.yaml`.
 
+## Access the Vault UI
+1. `kubectl port-forward -n vault svc/vault 8200:8200`
+2. http://localhost:8200
+3. login with token: `root`
+
 
 ## Access the LiteLLM-Proxy UI
 1. `kubectl port-forward -n litellm-proxy svc/litellm-proxy 4000:4000`
@@ -118,3 +123,8 @@ This decoupling allows you to use the exact same `platform-appsets` code to depl
 - [x] Unifi the naming. Right now we have `in-cluster-APPNAME` and `kind-enterprise-ai-APPNAME`
 - [ ] Think about dev/prod setup
     - Just allow the script to take in an optional cluster name prefix.
+
+---
+
+## Useful Links
+- https://codefresh.io/blog/gitops-secrets-with-argo-cd-hashicorp-vault-and-the-external-secret-operator/
