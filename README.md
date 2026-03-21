@@ -128,3 +128,4 @@ This decoupling allows you to use the exact same `platform-appsets` code to depl
 
 ## Useful Links
 - https://codefresh.io/blog/gitops-secrets-with-argo-cd-hashicorp-vault-and-the-external-secret-operator/
+- [Vault + ESO](https://www.youtube.com/watch?v=CF6ARIXdA4A)
