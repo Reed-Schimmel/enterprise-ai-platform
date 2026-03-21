@@ -124,8 +124,14 @@ Within a minute or two, the External Secrets Operator will sync this secret into
 ---
 
 ## TODO:
-- [ ] Open WebUI Helm chart as an ai-app https://github.com/open-webui/helm-charts
-- [ ] Get Credentials into LiteLLM-Proxy
+- [ ] Localhost ingress
+    - to make dev easier, to remove the need for the port-forward commands. Lets add an ingress controller of <argocd-app-name>.localhost
+- [ ] (maybe something vastly simplier) Open WebUI Helm chart as an ai-app https://github.com/open-webui/helm-charts
+    - uses litellm proxy
+- cluster DNS to send traffic to LLM providers to litellm-proxy without any change to the client apps. the cluster DNS service routes the requests to LiteLLM.
+    - How should we handle the API key? Does the user provide our key, do we use origin of the request and no key? 
+    - These requests are encrypted aren't they? can we even intercept them?
+- [x] Get Credentials into LiteLLM-Proxy
     - Use vault and external-secrets to allow the user to add api keys to the vault ui. external-secrets will then create the credentials inside of litellm
     - ~~Start with Gemini API key injection during bootstrap.~~
 - [x] Unifi the naming. Right now we have `in-cluster-APPNAME` and `kind-enterprise-ai-APPNAME`
