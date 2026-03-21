@@ -1,5 +1,4 @@
 namespace: vault
-targetRevision: "0.32.0"
 values:
   server:
     dev:

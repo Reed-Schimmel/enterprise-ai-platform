@@ -22,13 +22,14 @@ spec:
     spec:
       project: default
       source:
-        repoURL: https://helm.releases.hashicorp.com
-        targetRevision: '{{ .targetRevision }}'
-        chart: vault
+        repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
+        targetRevision: secret-manager
+        path: apps/vault
         helm:
           releaseName: vault
           values: |
-            {{- toYaml .values | nindent 12 }}
+            vault:
+              {{- toYaml .values | nindent 14 }}
       destination:
         server: https://kubernetes.default.svc
         namespace: '{{ .namespace }}'
