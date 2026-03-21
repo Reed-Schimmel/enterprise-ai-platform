@@ -105,7 +105,15 @@ This decoupling allows you to use the exact same `platform-appsets` code to depl
 ## Access the Vault UI
 1. `kubectl port-forward -n vault svc/vault 8200:8200`
 2. http://localhost:8200
-3. login with token: `root`
+3. Login with token: `root`
+
+### Adding API Keys to Vault
+To provide API keys for LiteLLM, you need to manually add them to Vault:
+1. Make sure Vault is port-forwarded and you are logged in as `root`.
+2. Click the `secret/` KV engine.
+3. Click **Create secret**, and enter `litellm/api-keys` as the path.
+4. Add your Key/Value pairs (e.g., Key: `OPENAI_API_KEY`, Value: `sk-...`) and click **Save**.
+Within a minute or two, the External Secrets Operator will sync this secret into the `litellm-proxy` namespace, and ArgoCD will inject it into your LiteLLM application.
 
 
 ## Access the LiteLLM-Proxy UI
