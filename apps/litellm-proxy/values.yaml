@@ -90,3 +90,9 @@ litellm-helm:
       master_key: os.environ/PROXY_MASTER_KEY
       # store_model_in_db: true
       # store_prompts_in_spend_logs: true
+
+  # Prisma migration job settings
+  migrationJob:
+    # Enable or disable the schema migration Job
+    # TODO: make false for dev and true for prod
+    enabled: false
