@@ -9,7 +9,7 @@ spec:
   generators:
     - git:
         repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
-        revision: secret-manager
+        revision: main
         files:
           - path: configurations/**/ai-infra/litellm-proxy-config.yaml
   goTemplate: true
@@ -38,7 +38,7 @@ spec:
       project: default
       source:
         repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
-        targetRevision: secret-manager
+        targetRevision: main
         path: apps/litellm-proxy
         helm:
           releaseName: litellm-proxy
