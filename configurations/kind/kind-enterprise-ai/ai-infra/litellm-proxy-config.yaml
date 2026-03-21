@@ -1,3 +1,2 @@
 targetRevision: main
-config: |
-  litellm-helm:
+config: ""

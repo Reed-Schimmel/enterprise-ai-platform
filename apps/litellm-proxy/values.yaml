@@ -50,6 +50,7 @@ litellm-helm:
   #  configuration file (or "litellm" ConfigMap) with `os.environ/<Env Var Name>`
   environmentSecrets:
     - litellm-proxy-dbcredentials
+    - litellm-proxy-api-keys
 
   # A list of Kubernetes ConfigMap objects that will be exported to the LiteLLM proxy
   #  pod as environment variables.  The ConfigMap kv-pairs can then be referenced in the
@@ -80,8 +81,18 @@ litellm-helm:
           model: openai/fake
           api_key: fake-key
           api_base: https://exampleopenaiendpoint-production.up.railway.app/
+      - model_name: gemini-pro-3.1
+        litellm_params:
+          model: gemini/gemini-3.1-pro-preview
+          api_key: os.environ/GEMINI_API_KEY
 
     general_settings:
       master_key: os.environ/PROXY_MASTER_KEY
       # store_model_in_db: true
       # store_prompts_in_spend_logs: true
+
+  # Prisma migration job settings
+  migrationJob:
+    # Enable or disable the schema migration Job
+    # TODO: make false for dev and true for prod
+    enabled: false

@@ -12,7 +12,7 @@ The platform is designed to be highly portable, but local development is streaml
 ├── apps/                    # GitOps entry points (App of Apps)
 ├── bootstrap/               # Local dev & kind-specific initialization scripts
 ├── configurations/          # Cluster-specific values (e.g., kind vs. EKS)
-└── platform-appsets/        # Core Helm Chart deploying all platform tools via AppSets
+└── platform                 # Core Helm Chart deploying all platform tools via AppSets
 ```
 
 Core components include:
@@ -102,6 +102,19 @@ We use the "App of Apps" pattern combined with Helm's "Multiple Sources" feature
 
 This decoupling allows you to use the exact same `platform-appsets` code to deploy to a production EKS cluster simply by creating a new `apps/eks-prod.yaml` and `configurations/eks-prod/platform-values.yaml`.
 
+## Access the Vault UI
+1. `kubectl port-forward -n vault svc/vault 8200:8200`
+2. http://localhost:8200
+3. Login with token: `root`
+
+### Adding API Keys to Vault
+To provide API keys for LiteLLM, you need to manually add them to Vault:
+1. Make sure Vault is port-forwarded and you are logged in as `root`.
+2. Click the `secret/` KV engine.
+3. Click **Create secret**, and enter `litellm/api-keys` as the path.
+4. Add your Key/Value pairs (e.g., Key: `GEMINI_API_KEY`, Value: `sk-...`) and click **Save**.
+Within a minute or two, the External Secrets Operator will sync this secret into the `litellm-proxy` namespace, and ArgoCD will inject it into your LiteLLM application.
+
 
 ## Access the LiteLLM-Proxy UI
 1. `kubectl port-forward -n litellm-proxy svc/litellm-proxy 4000:4000`
@@ -111,8 +124,22 @@ This decoupling allows you to use the exact same `platform-appsets` code to depl
 ---
 
 ## TODO:
-- [ ] Open WebUI Helm chart as an ai-app https://github.com/open-webui/helm-charts
-- [ ] Get Credentials into LiteLLM-Proxy
-    - Start with Gemini API key injection during bootstrap.
-- [ ] Unifi the naming. Right now we have `in-cluster-APPNAME` and `kind-enterprise-ai-APPNAME`
+- [ ] Localhost ingress
+    - to make dev easier, to remove the need for the port-forward commands. Lets add an ingress controller of <argocd-app-name>.localhost
+- [ ] (maybe something vastly simplier) Open WebUI Helm chart as an ai-app https://github.com/open-webui/helm-charts
+    - uses litellm proxy
+- cluster DNS to send traffic to LLM providers to litellm-proxy without any change to the client apps. the cluster DNS service routes the requests to LiteLLM.
+    - How should we handle the API key? Does the user provide our key, do we use origin of the request and no key? 
+    - These requests are encrypted aren't they? can we even intercept them?
+- [x] Get Credentials into LiteLLM-Proxy
+    - Use vault and external-secrets to allow the user to add api keys to the vault ui. external-secrets will then create the credentials inside of litellm
+    - ~~Start with Gemini API key injection during bootstrap.~~
+- [x] Unifi the naming. Right now we have `in-cluster-APPNAME` and `kind-enterprise-ai-APPNAME`
 - [ ] Think about dev/prod setup
+    - Just allow the script to take in an optional cluster name prefix.
+
+---
+
+## Useful Links
+- https://codefresh.io/blog/gitops-secrets-with-argo-cd-hashicorp-vault-and-the-external-secret-operator/
+- [Vault + ESO](https://www.youtube.com/watch?v=CF6ARIXdA4A)
