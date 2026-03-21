@@ -112,7 +112,7 @@ To provide API keys for LiteLLM, you need to manually add them to Vault:
 1. Make sure Vault is port-forwarded and you are logged in as `root`.
 2. Click the `secret/` KV engine.
 3. Click **Create secret**, and enter `litellm/api-keys` as the path.
-4. Add your Key/Value pairs (e.g., Key: `OPENAI_API_KEY`, Value: `sk-...`) and click **Save**.
+4. Add your Key/Value pairs (e.g., Key: `GEMINI_API_KEY`, Value: `sk-...`) and click **Save**.
 Within a minute or two, the External Secrets Operator will sync this secret into the `litellm-proxy` namespace, and ArgoCD will inject it into your LiteLLM application.
 
 
