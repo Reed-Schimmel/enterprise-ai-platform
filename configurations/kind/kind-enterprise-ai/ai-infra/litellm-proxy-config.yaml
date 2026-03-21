@@ -1,3 +1,2 @@
 targetRevision: secret-manager
-config: |
-  litellm-helm:
+config: ""
