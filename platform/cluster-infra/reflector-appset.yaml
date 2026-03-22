@@ -9,7 +9,7 @@ spec:
   generators:
     - git:
         repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
-        revision: main
+        revision: openwebui
         files:
           - path: configurations/**/cluster-infra/reflector-config.yaml
   goTemplate: true
