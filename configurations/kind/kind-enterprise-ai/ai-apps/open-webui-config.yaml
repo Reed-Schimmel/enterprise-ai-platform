@@ -1,0 +1,6 @@
+targetRevision: openwebui
+config: |-
+  open-webui:
+    # Any kind-specific overrides (like Ingress hostnames) go here
+    ingress:
+      enabled: false

@@ -1,0 +1,16 @@
+open-webui:
+  # Use LiteLLM Proxy as the OpenAI API Backend
+  enableOpenaiApi: true
+  openaiBaseApiUrl: "http://litellm-proxy.litellm-proxy.svc.cluster.local:4000/v1"
+  openaiApiKey: "sk-litellm-proxy-key" # Override in config/secrets if needed
+
+  # Disable embedded charts
+  ollama:
+    enabled: false
+  pipelines:
+    enabled: false
+
+  # Enable Data Persistence
+  persistence:
+    enabled: true
+    size: 2Gi
