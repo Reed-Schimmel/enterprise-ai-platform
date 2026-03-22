@@ -1,3 +1,4 @@
+# https://github.com/open-webui/helm-charts/blob/main/charts/open-webui/values.yaml
 open-webui:
   # Use LiteLLM Proxy as the OpenAI API Backend
   enableOpenaiApi: true

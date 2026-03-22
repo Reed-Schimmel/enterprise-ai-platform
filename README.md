@@ -121,6 +121,10 @@ Within a minute or two, the External Secrets Operator will sync this secret into
 2. http://localhost:4000/ui
 3. Login with "admin" and password: `kubectl get secret -n litellm-proxy litellm-proxy-masterkey -o jsonpath="{.data.masterkey}" | base64 -d; echo`
 
+## Access the Open WebUI
+1. `kubectl port-forward -n open-webui svc/open-webui 3000:80`
+2. Open your browser and navigate to http://localhost:3000
+
 ---
 
 ## TODO:
