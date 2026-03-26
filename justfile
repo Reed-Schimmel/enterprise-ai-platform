@@ -61,7 +61,7 @@ recreate-kind:
     #!/usr/bin/env bash
     set -e # Stops the script immediately if a critical command fails
 
-    echo "Renaming cluster enterprise-ai..."
+    echo "Deleting cluster enterprise-ai..."
     kind delete cluster --name enterprise-ai
 
     echo "Recreating kind cluster with ./bootstrap/setup-kind.sh"
