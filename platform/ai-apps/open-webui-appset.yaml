@@ -1,0 +1,45 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: open-webui
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: open-webui-appset
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
+        revision: main
+        files:
+          - path: configurations/**/ai-apps/open-webui-config.yaml
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  template:
+    metadata:
+      name: '{{ .path.basenameNormalized }}-open-webui'
+      labels:
+        cloud-provider: '{{ index .path.segments 2 }}'
+        app.kubernetes.io/name: open-webui
+      annotations:
+        argocd.argoproj.io/sync-wave: "15" # Deploys after ai-infra (litellm proxy)
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
+        targetRevision: main
+        path: apps/open-webui
+        helm:
+          releaseName: open-webui
+          valueFiles:
+            - values.yaml
+          values: |-
+            {{ .config }}
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: open-webui
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
