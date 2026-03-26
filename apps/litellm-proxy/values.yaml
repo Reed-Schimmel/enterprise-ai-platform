@@ -80,7 +80,7 @@ litellm-helm:
         litellm_params:
           model: openai/fake
           api_key: fake-key
-          api_base: https://exampleopenaiendpoint-production.up.railway.app/
+          api_base: https://api.openai.com/v1
       - model_name: gemini-pro-3.1
         litellm_params:
           model: gemini/gemini-3.1-pro-preview

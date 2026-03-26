@@ -4,16 +4,16 @@ set -e
 # Change directory to the root of the project
 cd "$(dirname "$0")/.."
 
-# Load environment variables
-if [ ! -f "bootstrap/.env" ]; then
-  echo "Error: bootstrap/.env file not found."
-  echo "Please copy bootstrap/.env.example to bootstrap/.env and populate it with your credentials."
-  exit 1
+# Load environment variables if they exist
+if [ -f "bootstrap/.env" ]; then
+  echo "Loading environment variables from bootstrap/.env..."
+  set -o allexport
+  source bootstrap/.env
+  set +o allexport
+else
+  echo "Notice: bootstrap/.env file not found."
+  echo "Proceeding with environment variables from the current shell or defaults."
 fi
-
-set -o allexport
-source bootstrap/.env
-set +o allexport
 
 # 1. Create the kind cluster
 if ! kind get clusters | grep -q "^enterprise-ai$"; then
@@ -46,7 +46,8 @@ kubectl cluster-info --context kind-enterprise-ai
 # 2. Install ArgoCD
 echo "Installing ArgoCD..."
 kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
-kubectl apply -n argocd --server-side --force-conflicts -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+ARGOCD_INSTALL_URL="${ARGOCD_INSTALL_URL:-https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml}"
+kubectl apply -n argocd --server-side --force-conflicts -f "${ARGOCD_INSTALL_URL}"
 
 echo "Waiting for ArgoCD deployments to be available..."
 kubectl wait --for=condition=Available deployment --all -n argocd --timeout=300s
@@ -81,10 +82,19 @@ argocd login localhost:8080 --username admin --password "${ARGOCD_ADMIN_PASSWORD
 
 # Add the repository (Using GITHUB_USERNAME and GITHUB_PAT correctly mapped)
 echo "Adding enterprise-ai-platform repository to ArgoCD..."
-argocd repo add https://github.com/Reed-Schimmel/enterprise-ai-platform.git \
-  --username "${GITHUB_USERNAME}" \
-  --password "${GITHUB_PAT}" \
-  --upsert
+GIT_REPO_URL="${GIT_REPO_URL:-https://github.com/Reed-Schimmel/enterprise-ai-platform.git}"
+if [ -n "${GITHUB_USERNAME}" ] && [ -n "${GITHUB_PAT}" ] && [ "${GITHUB_USERNAME}" != "your_github_username_here" ]; then
+  argocd repo add "${GIT_REPO_URL}" \
+    --username "${GITHUB_USERNAME}" \
+    --password "${GITHUB_PAT}" \
+    --upsert
+else
+  echo "No GitHub credentials provided (or using defaults). Adding repository as public..."
+  if ! argocd repo add "${GIT_REPO_URL}" --upsert; then
+    echo "Warning: Failed to add repository. If this is a private repository, please ensure you provide GITHUB_USERNAME and GITHUB_PAT in bootstrap/.env"
+    echo "Continuing setup anyway..."
+  fi
+fi
 
 # Kill the background port-forward process and remove the trap
 kill $PF_PID
@@ -92,20 +102,24 @@ trap - EXIT
 
 
 # 4. Create Docker Image Pull Secret with Reflector Annotations
-echo "Creating Docker image pull secret and configuring Reflector..."
-kubectl create secret docker-registry docker-image-pull-secret \
-  --namespace default \
-  --docker-server="${DOCKER_SERVER}" \
-  --docker-username="${DOCKER_USERNAME}" \
-  --docker-password="${DOCKER_PASSWORD}" \
-  --docker-email="${DOCKER_EMAIL}" \
-  --dry-run=client -o yaml | kubectl apply -f -
+if [ -n "${DOCKER_USERNAME}" ] && [ -n "${DOCKER_PASSWORD}" ]; then
+  echo "Creating Docker image pull secret and configuring Reflector..."
+  kubectl create secret docker-registry docker-image-pull-secret \
+    --namespace default \
+    --docker-server="${DOCKER_SERVER:-https://index.docker.io/v1/}" \
+    --docker-username="${DOCKER_USERNAME}" \
+    --docker-password="${DOCKER_PASSWORD}" \
+    --docker-email="${DOCKER_EMAIL:-}" \
+    --dry-run=client -o yaml | kubectl apply -f -
 
-kubectl annotate secret docker-image-pull-secret \
-  --namespace default \
-  reflector.v1.k8s.emberstack.com/reflection-allowed="true" \
-  reflector.v1.k8s.emberstack.com/reflection-auto-enabled="true" \
-  --overwrite
+  kubectl annotate secret docker-image-pull-secret \
+    --namespace default \
+    reflector.v1.k8s.emberstack.com/reflection-allowed="true" \
+    reflector.v1.k8s.emberstack.com/reflection-auto-enabled="true" \
+    --overwrite
+else
+  echo "Skipping Docker image pull secret creation (DOCKER_USERNAME or DOCKER_PASSWORD not set)."
+fi
 
 # 5. Apply the root App of Apps
 echo "Applying ArgoCD root application..."

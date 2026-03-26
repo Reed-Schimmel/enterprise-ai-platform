@@ -2,9 +2,30 @@
 
 This project serves as a comprehensive showcase of modern DevOps engineering and Generative AI integration. It demonstrates how to build, deploy, and manage a scalable AI platform using cloud-native technologies and GitOps principles.
 
+## Table of Contents
+- [Architecture Overview](#architecture-overview)
+- [Prerequisites](#prerequisites)
+- [Quick Start: Bootstrapping the Local Cluster](#quick-start-bootstrapping-the-local-cluster)
+- [Understanding the GitOps Flow](#understanding-the-gitops-flow)
+- [Accessing UIs (Vault, LiteLLM, Open WebUI)](#access-the-vault-ui)
+- [TODO](#todo)
+
 ## Architecture Overview
 
 The platform is designed to be highly portable, but local development is streamlined using a **kind** (Kubernetes IN Docker) cluster. All infrastructure and application deployments are managed declaratively using **ArgoCD**, leveraging **ApplicationSets** for dynamic and scalable GitOps delivery.
+
+```mermaid
+graph TD
+    A[bootstrap/root.yaml] -->|Deploys App of Apps| B(App of Apps Helm Chart)
+    B -->|Creates| C(Tier 1: cluster-infra-app)
+    B -->|Creates| D(Tier 2: ai-infra-app)
+    B -->|Creates| E(Tier 3: ai-apps-app)
+    C -->|Deploys AppSets from| F[platform/cluster-infra/]
+    D -->|Deploys AppSets from| G[platform/ai-infra/]
+    E -->|Deploys AppSets from| H[platform/ai-apps/]
+    F & G & H -->|Combines Helm Charts & Configs| I((ArgoCD Applications))
+    I -.->|Syncs to| J[kind cluster]
+```
 
 ### Directory Structure
 ```text
@@ -24,7 +45,9 @@ Core components include:
 
 ## Prerequisites
 
-Before starting, ensure you have **Docker** installed and running on your system, as it is required by `kind`. You will also need `kubectl` to interact with the cluster.
+Before starting, ensure you have **Docker** installed and running on your system, as it is required by `kind`. You will also need:
+- `kubectl` to interact with the cluster.
+- `argocd` CLI to authenticate and add the repository during bootstrap.
 
 ### Installing `kind`
 
@@ -50,6 +73,17 @@ sudo mv ./kind /usr/local/bin/kind
 
 We have provided a unified bootstrap script to automatically spin up your local environment, configure secrets, and install ArgoCD.
 
+### 0. Fork and Clone the Repository
+
+Because this is a GitOps platform, ArgoCD will continuously sync the cluster state with a Git repository. To make your own changes, you should fork this repository first.
+
+1. **Fork** this repository on GitHub.
+2. **Clone** your fork locally:
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/enterprise-ai-platform.git
+   cd enterprise-ai-platform
+   ```
+
 ### 1. Configure Credentials
 
 Copy the example environment file and fill in your credentials:
@@ -57,7 +91,7 @@ Copy the example environment file and fill in your credentials:
 ```bash
 cp bootstrap/.env.example bootstrap/.env
 ```
-Edit `bootstrap/.env` with your GitHub Username, Personal Access Token (PAT), and Docker Hub credentials.
+Edit `bootstrap/.env` with your GitHub Username, Personal Access Token (PAT), and Docker Hub credentials. Ensure you update `GIT_REPO_URL` to point to your fork (e.g., `https://github.com/YOUR_USERNAME/enterprise-ai-platform.git`).
 
 ### 2. Run the Bootstrap Script
 
@@ -101,6 +135,9 @@ We use the "App of Apps" pattern combined with Helm's "Multiple Sources" feature
 3. The `platform/` directory contains **ApplicationSets** that dynamically generate ArgoCD Applications by combining the Helm charts in `apps/` with the cluster-specific configurations found in `configurations/kind/kind-enterprise-ai/`.
 
 ## Access the Vault UI
+
+> **Note:** Vault is currently deployed in **Dev Mode** for local development, which automatically initializes it with a hardcoded `root` token. This should not be used in a production environment.
+
 1. `kubectl port-forward -n vault svc/vault 8200:8200`
 2. http://localhost:8200
 3. Login with token: `root`
@@ -112,12 +149,16 @@ To provide API keys for LiteLLM, you need to manually add them to Vault:
 3. Click **Create secret**, and enter `litellm/api-keys` as the path.
 4. Add your Key/Value pairs (e.g., Key: `GEMINI_API_KEY`, Value: `sk-...`) and click **Save**.
 Within a minute or two, the External Secrets Operator will sync this secret into the `litellm-proxy` namespace, and ArgoCD will inject it into your LiteLLM application.
-
+5. Refresh the ArgoCD resource [ai-infra-litellm-proxy/litellm-api-keys
+](https://localhost:8080/applications/argocd/ai-infra-litellm-proxy?view=tree&resource=&node=external-secrets.io%2FExternalSecret%2Flitellm-proxy%2Flitellm-api-keys%2F0)
 
 ## Access the LiteLLM-Proxy UI
 1. `kubectl port-forward -n litellm-proxy svc/litellm-proxy 4000:4000`
 2. http://localhost:4000/ui
-3. Login with "admin" and password: `kubectl get secret -n litellm-proxy litellm-proxy-masterkey -o jsonpath="{.data.masterkey}" | base64 -d; echo`
+3. Login with "admin" and the auto-generated master key. Retrieve it by running:
+   ```bash
+   kubectl get secret -n litellm-proxy litellm-proxy-masterkey -o jsonpath="{.data.masterkey}" | base64 -d; echo
+   ```
 
 ## Access the Open WebUI
 1. `kubectl port-forward -n open-webui svc/open-webui 3000:80`
@@ -128,7 +169,7 @@ Within a minute or two, the External Secrets Operator will sync this secret into
 ## TODO:
 - [ ] Localhost ingress
     - to make dev easier, to remove the need for the port-forward commands. Lets add an ingress controller of <argocd-app-name>.localhost
-- [ ] (maybe something vastly simplier) Open WebUI Helm chart as an ai-app https://github.com/open-webui/helm-charts
+- [x] (maybe something vastly simplier) Open WebUI Helm chart as an ai-app https://github.com/open-webui/helm-charts
     - uses litellm proxy
 - cluster DNS to send traffic to LLM providers to litellm-proxy without any change to the client apps. the cluster DNS service routes the requests to LiteLLM.
     - How should we handle the API key? Does the user provide our key, do we use origin of the request and no key? 
