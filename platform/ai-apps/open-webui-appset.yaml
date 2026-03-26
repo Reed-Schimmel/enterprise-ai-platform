@@ -9,7 +9,7 @@ spec:
   generators:
     - git:
         repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
-        revision: openwebui
+        revision: main
         files:
           - path: configurations/**/ai-apps/open-webui-config.yaml
   goTemplate: true
@@ -26,7 +26,7 @@ spec:
       project: default
       source:
         repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
-        targetRevision: openwebui
+        targetRevision: main
         path: apps/open-webui
         helm:
           releaseName: open-webui

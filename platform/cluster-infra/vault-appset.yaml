@@ -9,7 +9,7 @@ spec:
   generators:
     - git:
         repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
-        revision: openwebui
+        revision: main
         files:
           - path: configurations/**/cluster-infra/vault-config.yaml
   goTemplate: true
@@ -29,7 +29,7 @@ spec:
       project: default
       source:
         repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
-        targetRevision: openwebui
+        targetRevision: main
         path: apps/vault
         helm:
           releaseName: vault

@@ -9,7 +9,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
-    targetRevision: openwebui
+    targetRevision: main
     path: platform/cluster-infra
   destination:
     server: https://kubernetes.default.svc
