@@ -66,3 +66,50 @@ recreate-kind:
 
     echo "Recreating kind cluster with ./bootstrap/setup-kind.sh"
     ./bootstrap/setup-kind.sh
+
+# --- Recipe 3: Port Forward All Services ---
+# Usage: just port-forward
+port-forward:
+    #!/usr/bin/env bash
+    set -e
+    
+    echo "Starting port-forwards in the background..."
+    kubectl port-forward svc/argocd-server -n argocd 8080:443 > /dev/null 2>&1 &
+    kubectl port-forward -n vault svc/vault 8200:8200 > /dev/null 2>&1 &
+    kubectl port-forward -n litellm-proxy svc/litellm-proxy 4000:4000 > /dev/null 2>&1 &
+    kubectl port-forward -n open-webui svc/open-webui 3000:80 > /dev/null 2>&1 &
+    
+    echo "Wait a few seconds for port-forwards to establish..."
+    sleep 3
+    
+    echo "Port-forwards started successfully!"
+    echo "-----------------------------------------------------"
+    
+    echo "1. ArgoCD: https://localhost:8080"
+    echo "   Username: admin"
+    ARGOCD_PW=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d 2>/dev/null || echo "Not found yet")
+    echo "   Password: $ARGOCD_PW"
+    echo ""
+    
+    echo "2. Vault: http://localhost:8200"
+    echo "   Login with token"
+    echo "   Token: root"
+    echo ""
+    
+    echo "3. LiteLLM-Proxy: http://localhost:4000/ui"
+    echo "   Username: admin"
+    LITELLM_PW=$(kubectl get secret -n litellm-proxy litellm-proxy-masterkey -o jsonpath="{.data.masterkey}" | base64 -d 2>/dev/null || echo "Not found yet")
+    echo "   Password: $LITELLM_PW"
+    echo ""
+    
+    echo "4. Open WebUI: http://localhost:3000"
+    echo "-----------------------------------------------------"
+    echo "To stop port-forwards, run: just stop-port-forward"
+
+# --- Recipe 4: Stop Port Forwards ---
+# Usage: just stop-port-forward
+stop-port-forward:
+    #!/usr/bin/env bash
+    echo "Stopping all kubectl port-forward processes..."
+    pkill -f "kubectl port-forward" || echo "No port-forwards running."
+    echo "Done!"

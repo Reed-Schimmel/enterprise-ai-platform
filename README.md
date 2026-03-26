@@ -112,7 +112,8 @@ To provide API keys for LiteLLM, you need to manually add them to Vault:
 3. Click **Create secret**, and enter `litellm/api-keys` as the path.
 4. Add your Key/Value pairs (e.g., Key: `GEMINI_API_KEY`, Value: `sk-...`) and click **Save**.
 Within a minute or two, the External Secrets Operator will sync this secret into the `litellm-proxy` namespace, and ArgoCD will inject it into your LiteLLM application.
-
+5. Refresh the ArgoCD resource [ai-infra-litellm-proxy/litellm-api-keys
+](https://localhost:8080/applications/argocd/ai-infra-litellm-proxy?view=tree&resource=&node=external-secrets.io%2FExternalSecret%2Flitellm-proxy%2Flitellm-api-keys%2F0)
 
 ## Access the LiteLLM-Proxy UI
 1. `kubectl port-forward -n litellm-proxy svc/litellm-proxy 4000:4000`
