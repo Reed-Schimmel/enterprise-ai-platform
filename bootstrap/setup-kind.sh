@@ -90,7 +90,10 @@ if [ -n "${GITHUB_USERNAME}" ] && [ -n "${GITHUB_PAT}" ] && [ "${GITHUB_USERNAME
     --upsert
 else
   echo "No GitHub credentials provided (or using defaults). Adding repository as public..."
-  argocd repo add "${GIT_REPO_URL}" --upsert
+  if ! argocd repo add "${GIT_REPO_URL}" --upsert; then
+    echo "Warning: Failed to add repository. If this is a private repository, please ensure you provide GITHUB_USERNAME and GITHUB_PAT in bootstrap/.env"
+    echo "Continuing setup anyway..."
+  fi
 fi
 
 # Kill the background port-forward process and remove the trap
