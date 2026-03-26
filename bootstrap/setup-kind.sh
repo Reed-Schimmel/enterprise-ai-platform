@@ -4,16 +4,16 @@ set -e
 # Change directory to the root of the project
 cd "$(dirname "$0")/.."
 
-# Load environment variables
-if [ ! -f "bootstrap/.env" ]; then
-  echo "Error: bootstrap/.env file not found."
-  echo "Please copy bootstrap/.env.example to bootstrap/.env and populate it with your credentials."
-  exit 1
+# Load environment variables if they exist
+if [ -f "bootstrap/.env" ]; then
+  echo "Loading environment variables from bootstrap/.env..."
+  set -o allexport
+  source bootstrap/.env
+  set +o allexport
+else
+  echo "Notice: bootstrap/.env file not found."
+  echo "Proceeding with environment variables from the current shell or defaults."
 fi
-
-set -o allexport
-source bootstrap/.env
-set +o allexport
 
 # 1. Create the kind cluster
 if ! kind get clusters | grep -q "^enterprise-ai$"; then
