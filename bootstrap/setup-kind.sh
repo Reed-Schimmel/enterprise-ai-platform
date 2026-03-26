@@ -46,7 +46,8 @@ kubectl cluster-info --context kind-enterprise-ai
 # 2. Install ArgoCD
 echo "Installing ArgoCD..."
 kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
-kubectl apply -n argocd --server-side --force-conflicts -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+ARGOCD_INSTALL_URL="${ARGOCD_INSTALL_URL:-https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml}"
+kubectl apply -n argocd --server-side --force-conflicts -f "${ARGOCD_INSTALL_URL}"
 
 echo "Waiting for ArgoCD deployments to be available..."
 kubectl wait --for=condition=Available deployment --all -n argocd --timeout=300s
@@ -81,7 +82,8 @@ argocd login localhost:8080 --username admin --password "${ARGOCD_ADMIN_PASSWORD
 
 # Add the repository (Using GITHUB_USERNAME and GITHUB_PAT correctly mapped)
 echo "Adding enterprise-ai-platform repository to ArgoCD..."
-argocd repo add https://github.com/Reed-Schimmel/enterprise-ai-platform.git \
+GIT_REPO_URL="${GIT_REPO_URL:-https://github.com/Reed-Schimmel/enterprise-ai-platform.git}"
+argocd repo add "${GIT_REPO_URL}" \
   --username "${GITHUB_USERNAME}" \
   --password "${GITHUB_PAT}" \
   --upsert
@@ -92,20 +94,24 @@ trap - EXIT
 
 
 # 4. Create Docker Image Pull Secret with Reflector Annotations
-echo "Creating Docker image pull secret and configuring Reflector..."
-kubectl create secret docker-registry docker-image-pull-secret \
-  --namespace default \
-  --docker-server="${DOCKER_SERVER}" \
-  --docker-username="${DOCKER_USERNAME}" \
-  --docker-password="${DOCKER_PASSWORD}" \
-  --docker-email="${DOCKER_EMAIL}" \
-  --dry-run=client -o yaml | kubectl apply -f -
+if [ -n "${DOCKER_USERNAME}" ] && [ -n "${DOCKER_PASSWORD}" ]; then
+  echo "Creating Docker image pull secret and configuring Reflector..."
+  kubectl create secret docker-registry docker-image-pull-secret \
+    --namespace default \
+    --docker-server="${DOCKER_SERVER:-https://index.docker.io/v1/}" \
+    --docker-username="${DOCKER_USERNAME}" \
+    --docker-password="${DOCKER_PASSWORD}" \
+    --docker-email="${DOCKER_EMAIL:-}" \
+    --dry-run=client -o yaml | kubectl apply -f -
 
-kubectl annotate secret docker-image-pull-secret \
-  --namespace default \
-  reflector.v1.k8s.emberstack.com/reflection-allowed="true" \
-  reflector.v1.k8s.emberstack.com/reflection-auto-enabled="true" \
-  --overwrite
+  kubectl annotate secret docker-image-pull-secret \
+    --namespace default \
+    reflector.v1.k8s.emberstack.com/reflection-allowed="true" \
+    reflector.v1.k8s.emberstack.com/reflection-auto-enabled="true" \
+    --overwrite
+else
+  echo "Skipping Docker image pull secret creation (DOCKER_USERNAME or DOCKER_PASSWORD not set)."
+fi
 
 # 5. Apply the root App of Apps
 echo "Applying ArgoCD root application..."
