@@ -83,10 +83,15 @@ argocd login localhost:8080 --username admin --password "${ARGOCD_ADMIN_PASSWORD
 # Add the repository (Using GITHUB_USERNAME and GITHUB_PAT correctly mapped)
 echo "Adding enterprise-ai-platform repository to ArgoCD..."
 GIT_REPO_URL="${GIT_REPO_URL:-https://github.com/Reed-Schimmel/enterprise-ai-platform.git}"
-argocd repo add "${GIT_REPO_URL}" \
-  --username "${GITHUB_USERNAME}" \
-  --password "${GITHUB_PAT}" \
-  --upsert
+if [ -n "${GITHUB_USERNAME}" ] && [ -n "${GITHUB_PAT}" ] && [ "${GITHUB_USERNAME}" != "your_github_username_here" ]; then
+  argocd repo add "${GIT_REPO_URL}" \
+    --username "${GITHUB_USERNAME}" \
+    --password "${GITHUB_PAT}" \
+    --upsert
+else
+  echo "No GitHub credentials provided (or using defaults). Adding repository as public..."
+  argocd repo add "${GIT_REPO_URL}" --upsert
+fi
 
 # Kill the background port-forward process and remove the trap
 kill $PF_PID
