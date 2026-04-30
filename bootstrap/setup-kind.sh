@@ -133,7 +133,7 @@ echo ""
 echo "Waiting for Vault to be ready for secret injection..."
 # It may take a moment for the Vault namespace/pod to even be created by ArgoCD
 # so we loop and wait until the pod exists, then wait for it to be ready.
-until kubectl get pod -l app.kubernetes.io/name=vault -n vault > /dev/null 2>&1; do
+until kubectl get pod -l app.kubernetes.io/name=vault -n vault 2>/dev/null | grep -q "vault-0"; do
   sleep 5
 done
 kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=vault -n vault --timeout=300s
