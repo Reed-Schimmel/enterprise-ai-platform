@@ -143,14 +143,15 @@ We use the "App of Apps" pattern combined with Helm's "Multiple Sources" feature
 3. Login with token: `root`
 
 ### Adding API Keys to Vault
-To provide API keys for LiteLLM, you need to manually add them to Vault:
+The recommended way to provide API keys for LiteLLM and OpenClaw is to define them in your `bootstrap/.env` file before running `setup-kind.sh`. The bootstrap script automatically injects them into Vault.
+
+If you need to update or add keys manually after bootstrap:
 1. Make sure Vault is port-forwarded and you are logged in as `root`.
 2. Click the `secret/` KV engine.
-3. Click **Create secret**, and enter `litellm/api-keys` as the path.
-4. Add your Key/Value pairs (e.g., Key: `GEMINI_API_KEY`, Value: `sk-...`) and click **Save**.
-Within a minute or two, the External Secrets Operator will sync this secret into the `litellm-proxy` namespace, and ArgoCD will inject it into your LiteLLM application.
-5. Refresh the ArgoCD resource [ai-infra-litellm-proxy/litellm-api-keys
-](https://localhost:8080/applications/argocd/ai-infra-litellm-proxy?view=tree&resource=&node=external-secrets.io%2FExternalSecret%2Flitellm-proxy%2Flitellm-api-keys%2F0)
+3. To update LiteLLM keys, edit `litellm/api-keys` (e.g., Key: `GEMINI_API_KEY`, Value: `sk-...`).
+4. To update OpenClaw keys, edit `openclaw/secrets` (e.g., Key: `OPENCLAW_GATEWAY_TOKEN` or `OPENAI_API_KEY`).
+5. Click **Save**.
+Within a minute or two, the External Secrets Operator will sync this secret into the respective namespaces (`litellm-proxy` or `openclaw`), and ArgoCD will inject it into your application.
 
 ## Access the LiteLLM-Proxy UI
 1. `kubectl port-forward -n litellm-proxy svc/litellm-proxy 4000:4000`

@@ -128,6 +128,41 @@ kubectl apply -f bootstrap/root.yaml
 echo "====================================================================="
 echo "Bootstrap complete!"
 echo "ArgoCD is syncing the platform components (Crossplane, Reflector, etc)."
+
+echo ""
+echo "Waiting for Vault to be ready for secret injection..."
+# It may take a moment for the Vault namespace/pod to even be created by ArgoCD
+# so we loop and wait until the pod exists, then wait for it to be ready.
+until kubectl get pod -l app.kubernetes.io/name=vault -n vault > /dev/null 2>&1; do
+  sleep 5
+done
+kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=vault -n vault --timeout=300s
+
+echo "Injecting secrets into Vault..."
+
+if [ -n "${GEMINI_API_KEY}" ] && [ "${GEMINI_API_KEY}" != "your_gemini_api_key_here" ]; then
+  echo "Injecting LiteLLM API Keys..."
+  kubectl exec -n vault vault-0 -- vault kv put secret/litellm/api-keys GEMINI_API_KEY="${GEMINI_API_KEY}"
+fi
+
+if [ -n "${OPENCLAW_GATEWAY_TOKEN}" ] && [ "${OPENCLAW_GATEWAY_TOKEN}" != "your_openclaw_gateway_token_here" ] || \
+   [ -n "${OPENAI_API_KEY}" ] && [ "${OPENAI_API_KEY}" != "your_openai_api_key_here" ]; then
+  
+  echo "Injecting OpenClaw secrets..."
+  # Build the vault command dynamically based on which keys are present
+  VAULT_CMD="vault kv put secret/openclaw/secrets"
+  
+  if [ -n "${OPENCLAW_GATEWAY_TOKEN}" ] && [ "${OPENCLAW_GATEWAY_TOKEN}" != "[openssl rand -hex 16]" ]; then
+    VAULT_CMD="$VAULT_CMD OPENCLAW_GATEWAY_TOKEN=\"${OPENCLAW_GATEWAY_TOKEN}\""
+  fi
+  
+  if [ -n "${OPENAI_API_KEY}" ] && [ "${OPENAI_API_KEY}" != "your_openai_api_key_here" ]; then
+    VAULT_CMD="$VAULT_CMD OPENAI_API_KEY=\"${OPENAI_API_KEY}\""
+  fi
+  
+  kubectl exec -n vault vault-0 -- sh -c "$VAULT_CMD"
+fi
+
 echo ""
 echo "To access ArgoCD UI:"
 echo "1. Get the admin password:"
