@@ -34,7 +34,8 @@ data:
       "models": {
         "providers": {
           "openai": {
-            "baseUrl": "http://litellm-proxy.litellm-proxy.svc.cluster.local:4000/v1"
+            "baseUrl": "http://litellm-proxy.litellm-proxy.svc.cluster.local:4000/v1",
+            "models": ["gemini-pro-3.1"]
           }
         }
       }
