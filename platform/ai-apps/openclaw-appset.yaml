@@ -1,0 +1,45 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: openclaw
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: openclaw-appset
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
+        revision: main
+        files:
+          - path: configurations/**/ai-apps/openclaw-config.yaml
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  template:
+    metadata:
+      name: '{{ .path.basenameNormalized }}-openclaw'
+      labels:
+        cloud-provider: '{{ index .path.segments 2 }}'
+        app.kubernetes.io/name: openclaw
+      annotations:
+        argocd.argoproj.io/sync-wave: "15" # Deploys after ai-infra
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
+        targetRevision: main
+        path: apps/openclaw
+        helm:
+          releaseName: openclaw
+          valueFiles:
+            - values.yaml
+          values: |-
+            {{ .config }}
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: openclaw
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true

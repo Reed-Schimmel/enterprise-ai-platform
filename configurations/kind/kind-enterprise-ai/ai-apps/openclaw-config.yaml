@@ -1,0 +1,6 @@
+targetRevision: main
+config: |-
+  # Override any default values from apps/openclaw/values.yaml here
+  replicaCount: 1
+  ingress:
+    enabled: false
