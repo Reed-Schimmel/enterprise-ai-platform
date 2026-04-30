@@ -94,5 +94,4 @@ litellm-helm:
   # Prisma migration job settings
   migrationJob:
     # Enable or disable the schema migration Job
-    # TODO: make false for dev and true for prod
-    enabled: false
+    enabled: true
