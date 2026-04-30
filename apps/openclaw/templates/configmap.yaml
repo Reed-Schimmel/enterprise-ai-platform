@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "openclaw.fullname" . }}-config
+  labels:
+    {{- include "openclaw.labels" . | nindent 4 }}
+data:
+  openclaw.json: |
+    {
+      "gateway": {
+        "mode": {{ .Values.gatewayConfig.mode | quote }},
+        "bind": {{ .Values.gatewayConfig.bind | quote }},
+        "port": {{ .Values.gatewayConfig.port }},
+        "auth": {
+          "mode": {{ .Values.gatewayConfig.auth.mode | quote }}
+        },
+        "controlUi": {
+          "enabled": {{ .Values.gatewayConfig.controlUi.enabled }}
+        }
+      },
+      "agents": {
+        "defaults": {
+          "workspace": "~/.openclaw/workspace"
+        },
+        "list": [
+          {
+            "id": "default",
+            "name": "OpenClaw Assistant",
+            "workspace": "~/.openclaw/workspace"
+          }
+        ]
+      },
+      "cron": { "enabled": false }
+    }
+  AGENTS.md: |
+    {{- .Values.agentsMd | nindent 4 }}
