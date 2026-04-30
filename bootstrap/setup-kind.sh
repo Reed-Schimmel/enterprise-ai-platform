@@ -158,28 +158,58 @@ echo "Waiting for LiteLLM Proxy to be ready..."
 until kubectl get externalsecret litellm-api-keys -n litellm-proxy > /dev/null 2>&1; do sleep 5; done
 kubectl wait --for=condition=Ready externalsecret/litellm-api-keys -n litellm-proxy --timeout=120s
 
-# Wait for the LiteLLM deployment
+# Wait for the LiteLLM deployment rollout to complete (this ensures the DB is also up)
+echo "Waiting for LiteLLM deployment to rollout..."
 until kubectl get deployment litellm-proxy -n litellm-proxy > /dev/null 2>&1; do sleep 5; done
-kubectl wait --for=condition=Available deployment/litellm-proxy -n litellm-proxy --timeout=300s
+kubectl rollout status deployment/litellm-proxy -n litellm-proxy --timeout=600s
 
 # Generate LiteLLM Key for OpenClaw
 LITELLM_MASTER_KEY=$(kubectl get secret -n litellm-proxy litellm-proxy-masterkey -o jsonpath="{.data.masterkey}" | base64 -d)
 
 echo "Starting port-forward to LiteLLM Proxy on port 4000..."
+# Ensure no lingering port-forward is occupying 4000
+fuser -k 4000/tcp 2>/dev/null || true
+
 kubectl port-forward svc/litellm-proxy -n litellm-proxy 4000:4000 > /dev/null 2>&1 &
 LLM_PF_PID=$!
-sleep 5 # Wait for connection
 
-echo "Generating LiteLLM API Key for OpenClaw..."
-LITELLM_RESPONSE=$(curl -s -X POST http://localhost:4000/key/generate \
-  -H "Authorization: Bearer sk-${LITELLM_MASTER_KEY}" \
-  -H "Content-Type: application/json" \
-  -d '{"models": [], "key_alias": "openclaw-service-account"}')
+echo "Waiting for LiteLLM API to become reachable..."
+MAX_RETRIES=15
+RETRY_COUNT=0
+LITELLM_READY=false
 
-NEW_LITELLM_KEY=$(echo "$LITELLM_RESPONSE" | grep -o '"key":"sk-[^"]*"' | cut -d'"' -f4)
+while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+  if curl -sf http://localhost:4000/health/readiness > /dev/null 2>&1; then
+    LITELLM_READY=true
+    break
+  fi
+  sleep 3
+  RETRY_COUNT=$((RETRY_COUNT+1))
+done
+
+if [ "$LITELLM_READY" = "true" ]; then
+  echo "Generating LiteLLM API Key for OpenClaw..."
+  
+  # Temporarily disable set -e to handle curl failure gracefully
+  set +e
+  LITELLM_RESPONSE=$(curl -s -X POST http://localhost:4000/key/generate \
+    -H "Authorization: Bearer sk-${LITELLM_MASTER_KEY}" \
+    -H "Content-Type: application/json" \
+    -d '{"models": [], "key_alias": "openclaw-service-account"}')
+  CURL_EXIT=$?
+  set -e
+  
+  if [ $CURL_EXIT -eq 0 ]; then
+    NEW_LITELLM_KEY=$(echo "$LITELLM_RESPONSE" | grep -o '"key":"sk-[^"]*"' | cut -d'"' -f4)
+  else
+    echo "Error: Failed to generate API key from LiteLLM (curl exit code $CURL_EXIT)."
+  fi
+else
+  echo "Error: LiteLLM API did not become reachable."
+fi
 
 # Kill the port-forward process
-kill $LLM_PF_PID
+kill $LLM_PF_PID 2>/dev/null || true
 
 if [ -n "${NEW_LITELLM_KEY}" ]; then
   echo "Injecting generated LiteLLM API Key into Vault for OpenClaw..."
