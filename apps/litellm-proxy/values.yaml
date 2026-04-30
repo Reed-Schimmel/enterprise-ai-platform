@@ -95,3 +95,6 @@ litellm-helm:
   migrationJob:
     # Enable or disable the schema migration Job
     enabled: true
+    hooks:
+      argocd:
+        enabled: false

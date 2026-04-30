@@ -145,22 +145,51 @@ if [ -n "${GEMINI_API_KEY}" ] && [ "${GEMINI_API_KEY}" != "your_gemini_api_key_h
   kubectl exec -n vault vault-0 -- vault kv put secret/litellm/api-keys GEMINI_API_KEY="${GEMINI_API_KEY}"
 fi
 
-if [ -n "${OPENCLAW_GATEWAY_TOKEN}" ] && [ "${OPENCLAW_GATEWAY_TOKEN}" != "your_openclaw_gateway_token_here" ] || \
-   [ -n "${OPENAI_API_KEY}" ] && [ "${OPENAI_API_KEY}" != "your_openai_api_key_here" ]; then
+if [ -n "${OPENCLAW_GATEWAY_TOKEN}" ] && [ "${OPENCLAW_GATEWAY_TOKEN}" != "your_openclaw_gateway_token_here" ]; then
   
   echo "Injecting OpenClaw secrets..."
-  # Build the vault command dynamically based on which keys are present
-  VAULT_CMD="vault kv put secret/openclaw/secrets"
-  
-  if [ -n "${OPENCLAW_GATEWAY_TOKEN}" ] && [ "${OPENCLAW_GATEWAY_TOKEN}" != "[openssl rand -hex 16]" ]; then
-    VAULT_CMD="$VAULT_CMD OPENCLAW_GATEWAY_TOKEN=\"${OPENCLAW_GATEWAY_TOKEN}\""
-  fi
-  
-  if [ -n "${OPENAI_API_KEY}" ] && [ "${OPENAI_API_KEY}" != "your_openai_api_key_here" ]; then
-    VAULT_CMD="$VAULT_CMD OPENAI_API_KEY=\"${OPENAI_API_KEY}\""
-  fi
-  
+  VAULT_CMD="vault kv put secret/openclaw/secrets OPENCLAW_GATEWAY_TOKEN=\"${OPENCLAW_GATEWAY_TOKEN}\""
   kubectl exec -n vault vault-0 -- sh -c "$VAULT_CMD"
+fi
+
+echo ""
+echo "Waiting for LiteLLM Proxy to be ready..."
+# Wait for the ExternalSecret to report Ready
+until kubectl get externalsecret litellm-api-keys -n litellm-proxy > /dev/null 2>&1; do sleep 5; done
+kubectl wait --for=condition=Ready externalsecret/litellm-api-keys -n litellm-proxy --timeout=120s
+
+# Wait for the LiteLLM deployment
+until kubectl get deployment litellm-proxy -n litellm-proxy > /dev/null 2>&1; do sleep 5; done
+kubectl wait --for=condition=Available deployment/litellm-proxy -n litellm-proxy --timeout=300s
+
+# Generate LiteLLM Key for OpenClaw
+LITELLM_MASTER_KEY=$(kubectl get secret -n litellm-proxy litellm-proxy-masterkey -o jsonpath="{.data.masterkey}" | base64 -d)
+
+echo "Starting port-forward to LiteLLM Proxy on port 4000..."
+kubectl port-forward svc/litellm-proxy -n litellm-proxy 4000:4000 > /dev/null 2>&1 &
+LLM_PF_PID=$!
+sleep 5 # Wait for connection
+
+echo "Generating LiteLLM API Key for OpenClaw..."
+LITELLM_RESPONSE=$(curl -s -X POST http://localhost:4000/key/generate \
+  -H "Authorization: Bearer sk-${LITELLM_MASTER_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{"models": [], "key_alias": "openclaw-service-account"}')
+
+NEW_LITELLM_KEY=$(echo "$LITELLM_RESPONSE" | grep -o '"key":"sk-[^"]*"' | cut -d'"' -f4)
+
+# Kill the port-forward process
+kill $LLM_PF_PID
+
+if [ -n "${NEW_LITELLM_KEY}" ]; then
+  echo "Injecting generated LiteLLM API Key into Vault for OpenClaw..."
+  if kubectl exec -n vault vault-0 -- vault kv get secret/openclaw/secrets > /dev/null 2>&1; then
+    kubectl exec -n vault vault-0 -- vault kv patch secret/openclaw/secrets OPENAI_API_KEY="${NEW_LITELLM_KEY}"
+  else
+    kubectl exec -n vault vault-0 -- vault kv put secret/openclaw/secrets OPENAI_API_KEY="${NEW_LITELLM_KEY}"
+  fi
+else
+  echo "Warning: Failed to generate LiteLLM API key for OpenClaw."
 fi
 
 echo ""
