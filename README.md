@@ -8,7 +8,7 @@ This project serves as a comprehensive showcase of modern DevOps engineering and
 - [Quick Start: Bootstrapping the Local Cluster](#quick-start-bootstrapping-the-local-cluster)
 - [Understanding the GitOps Flow](#understanding-the-gitops-flow)
 - [Accessing UIs (Vault, LiteLLM, Open WebUI)](#access-the-vault-ui)
-- [TODO](#todo)
+- [TODOs](#todo)
 
 ## Architecture Overview
 
