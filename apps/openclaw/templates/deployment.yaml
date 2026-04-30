@@ -122,7 +122,8 @@ spec:
                 - "require('http').get('http://127.0.0.1:{{ .Values.gatewayConfig.port }}/healthz', r => process.exit(r.statusCode < 400 ? 0 : 1)).on('error', () => process.exit(1))"
             initialDelaySeconds: 60
             periodSeconds: 30
-            timeoutSeconds: 10
+            timeoutSeconds: 20
+            failureThreshold: 3
           readinessProbe:
             exec:
               command:
@@ -131,7 +132,8 @@ spec:
                 - "require('http').get('http://127.0.0.1:{{ .Values.gatewayConfig.port }}/readyz', r => process.exit(r.statusCode < 400 ? 0 : 1)).on('error', () => process.exit(1))"
             initialDelaySeconds: 15
             periodSeconds: 10
-            timeoutSeconds: 5
+            timeoutSeconds: 15
+            failureThreshold: 5
           volumeMounts:
             - name: openclaw-home
               mountPath: /home/node/.openclaw
