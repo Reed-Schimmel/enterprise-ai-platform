@@ -86,9 +86,9 @@ existingSecret: "openclaw-secrets"
 
 # Additional environment variables to pass to the OpenClaw container.
 # E.g., for configuring LiteLLM base URLs
-env: []
-  # - name: OPENAI_BASE_URL
-  #   value: "http://litellm-proxy.default.svc.cluster.local:4000"
+env:
+  - name: OPENAI_BASE_URL
+    value: "http://litellm-proxy.litellm-proxy.svc.cluster.local:4000/v1"
 
 # OpenClaw Gateway Configuration
 # See https://docs.openclaw.ai/gateway/configuration
