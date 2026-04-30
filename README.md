@@ -168,6 +168,7 @@ Within a minute or two, the External Secrets Operator will sync this secret into
 ---
 
 ## TODO:
+- [ ] Replace gpt routing to gemini via litellm with proper settings in openclaw, and or use the default fallback settings in litellm
 - [ ] Localhost ingress
     - to make dev easier, to remove the need for the port-forward commands. Lets add an ingress controller of <argocd-app-name>.localhost
 - [x] (maybe something vastly simplier) Open WebUI Helm chart as an ai-app https://github.com/open-webui/helm-charts
