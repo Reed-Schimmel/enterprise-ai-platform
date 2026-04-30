@@ -9,7 +9,7 @@ spec:
   generators:
     - git:
         repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
-        revision: main
+        revision: openclaw
         files:
           - path: configurations/**/ai-apps/openclaw-config.yaml
   goTemplate: true
@@ -26,7 +26,7 @@ spec:
       project: default
       source:
         repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
-        targetRevision: main
+        targetRevision: openclaw
         path: apps/openclaw
         helm:
           releaseName: openclaw
