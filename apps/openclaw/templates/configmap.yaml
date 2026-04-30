@@ -30,7 +30,14 @@ data:
           }
         ]
       },
-      "cron": { "enabled": false }
+      "cron": { "enabled": false },
+      "models": {
+        "providers": {
+          "openai": {
+            "baseUrl": "http://litellm-proxy.litellm-proxy.svc.cluster.local:4000/v1"
+          }
+        }
+      }
     }
   AGENTS.md: |
     {{- .Values.agentsMd | nindent 4 }}
