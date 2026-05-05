@@ -24,12 +24,13 @@ spec:
       project: default
       source:
         repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
-        targetRevision: '{{ .config.targetRevision }}'
+        targetRevision: '{{ .targetRevision }}'
         path: apps/gitops-assistant
         helm:
           valueFiles:
             - values.yaml
-            - '{{ .config.config }}'
+          values: |-
+            {{ .config }}
       destination:
         server: https://kubernetes.default.svc
         namespace: argocd
