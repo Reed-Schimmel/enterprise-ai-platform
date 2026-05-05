@@ -9,7 +9,7 @@ litellm-helm:
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
     # https://github.com/berriai/litellm/pkgs/container/litellm-non_root/592203661?tag=main-v1.80.7-nightly
-    tag: "main-v1.80.7-nightly"
+    tag: "main-v1.83.14-stable"
 
   nameOverride: "litellm"
   fullnameOverride: ""
