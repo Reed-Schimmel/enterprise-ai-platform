@@ -88,6 +88,10 @@ litellm-helm:
         litellm_params:
           model: gemini/gemini-3.1-pro-preview
           api_key: os.environ/GEMINI_API_KEY
+      - model_name: gemini-3.1-flash-lite-preview
+        litellm_params:
+          model: gemini/gemini-3.1-flash-lite-preview
+          api_key: os.environ/GEMINI_API_KEY
 
     general_settings:
       master_key: os.environ/PROXY_MASTER_KEY
