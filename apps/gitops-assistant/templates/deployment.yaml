@@ -39,6 +39,6 @@ spec:
           envFrom:
             - secretRef:
                 name: {{ .Chart.Name }}-secrets
-                optional: true
+                optional: false
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
