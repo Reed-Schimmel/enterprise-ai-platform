@@ -9,7 +9,7 @@ spec:
   generators:
     - git:
         repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
-        revision: arize-phoenix
+        revision: main
         files:
           - path: configurations/**/ai-infra/litellm-proxy-config.yaml
   goTemplate: true
@@ -38,7 +38,7 @@ spec:
       project: default
       source:
         repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
-        targetRevision: arize-phoenix
+        targetRevision: main
         path: apps/litellm-proxy
         helm:
           releaseName: litellm-proxy

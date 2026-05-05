@@ -9,7 +9,7 @@ spec:
   generators:
     - git:
         repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
-        revision: arize-phoenix
+        revision: main
         files:
           - path: configurations/**/ai-infra/arize-phoenix-config.yaml
   goTemplate: true
