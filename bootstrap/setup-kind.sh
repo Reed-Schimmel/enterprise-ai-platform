@@ -123,11 +123,19 @@ else
   echo "Skipping Docker image pull secret creation (DOCKER_USERNAME or DOCKER_PASSWORD not set)."
 fi
 
-# 5. Apply the root App of Apps
+# 5. Build and Load GitOps Assistant Image
+echo "Building and loading GitOps Assistant image into cluster..."
+if command -v just >/dev/null 2>&1; then
+  just build-gitops-assistant
+else
+  echo "Warning: 'just' is not installed. You must manually build and load the gitops-assistant docker image."
+fi
+
+# 6. Apply the root App of Apps
 echo "Applying ArgoCD root application..."
 kubectl apply -f bootstrap/root.yaml
 
-# 6. Automate Vault LiteLLM API Key Injection
+# 7. Automate Vault LiteLLM API Key Injection
 if [ -n "${GEMINI_API_KEY}" ] && [ "${GEMINI_API_KEY}" != "your_gemini_api_key_here" ]; then
   echo "GEMINI_API_KEY detected. Waiting for Vault to be deployed by ArgoCD..."
   

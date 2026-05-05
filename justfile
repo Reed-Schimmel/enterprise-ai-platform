@@ -79,6 +79,7 @@ port-forward:
     kubectl port-forward -n litellm-proxy svc/litellm-proxy 4000:4000 > /dev/null 2>&1 &
     kubectl port-forward -n open-webui svc/open-webui 3000:80 > /dev/null 2>&1 &
     kubectl port-forward -n arize-phoenix svc/arize-phoenix-svc 6006:6006 > /dev/null 2>&1 &
+    kubectl port-forward -n argocd svc/gitops-assistant 8000:8000 > /dev/null 2>&1 &
     
     echo "Wait a few seconds for port-forwards to establish..."
     sleep 3
@@ -107,6 +108,9 @@ port-forward:
     echo ""
     
     echo "5. Arize-Phoenix: http://localhost:6006"
+    echo ""
+    
+    echo "6. GitOps Assistant: http://localhost:8000"
     echo "-----------------------------------------------------"
     echo "To stop port-forwards, run: just stop-port-forward"
 
