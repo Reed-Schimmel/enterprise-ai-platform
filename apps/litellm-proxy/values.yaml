@@ -55,7 +55,8 @@ litellm-helm:
   # A list of Kubernetes ConfigMap objects that will be exported to the LiteLLM proxy
   #  pod as environment variables.  The ConfigMap kv-pairs can then be referenced in the
   #  configuration file (or "litellm" ConfigMap) with `os.environ/<Env Var Name>`
-  environmentConfigMaps: []
+  environmentConfigMaps:
+    - litellm-otel-env
     # - litellm-env-configmap
 
   proxyConfigMap:
@@ -72,6 +73,8 @@ litellm-helm:
   proxy_config:
     litellm_settings:
       drop_params: true # drop unsupported params instead of throwing an error.
+      success_callback: ["arize_phoenix"]
+      failure_callback: ["arize_phoenix"]
       # callbacks:
       #   - prometheus
     model_list:
@@ -84,6 +87,10 @@ litellm-helm:
       - model_name: gemini-pro-3.1
         litellm_params:
           model: gemini/gemini-3.1-pro-preview
+          api_key: os.environ/GEMINI_API_KEY
+      - model_name: gemini-3.1-flash-lite-preview
+        litellm_params:
+          model: gemini/gemini-3.1-flash-lite-preview
           api_key: os.environ/GEMINI_API_KEY
 
     general_settings:

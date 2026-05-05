@@ -1,0 +1,24 @@
+phoenix-helm:
+  replicaCount: 1
+
+  server:
+    service:
+      type: ClusterIP
+
+  # Disable ingress since we rely on port-forwarding locally
+  ingress:
+    enabled: false
+
+  # Keep it simple for local dev: disable auth
+  auth:
+    enableAuth: false
+
+  # Use SQLite persistent volume instead of PostgreSQL pod to save local resources
+  postgresql:
+    enabled: false
+  
+  persistence:
+    enabled: true
+    size: 2Gi
+    accessModes:
+      - ReadWriteOnce

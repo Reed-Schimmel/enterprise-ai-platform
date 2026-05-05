@@ -1,0 +1,43 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: arize-phoenix
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: arize-phoenix-appset
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
+        revision: main
+        files:
+          - path: configurations/**/ai-infra/arize-phoenix-config.yaml
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  template:
+    metadata:
+      name: '{{ index .path.segments 2 }}-arize-phoenix'
+      labels:
+        app.kubernetes.io/name: arize-phoenix
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
+        targetRevision: '{{ .targetRevision }}'
+        path: apps/arize-phoenix
+        helm:
+          releaseName: arize-phoenix
+          values: |
+            {{- if .values }}
+            phoenix-helm:
+              {{- toYaml .values | nindent 14 }}
+            {{- end }}
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: arize-phoenix
+      syncPolicy:
+        automated:
+          prune: false
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
