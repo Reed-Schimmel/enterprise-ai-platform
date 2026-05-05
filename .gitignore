@@ -1,3 +1,5 @@
 bootstrap/.env
 *.tgz
 Chart.lock
+apps/gitops-assistant/.chainlit/**
+*.pyc

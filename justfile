@@ -110,7 +110,29 @@ port-forward:
     echo "-----------------------------------------------------"
     echo "To stop port-forwards, run: just stop-port-forward"
 
-# --- Recipe 4: Stop Port Forwards ---
+# --- Recipe 5: Run GitOps Assistant Locally ---
+# Usage: just run-gitops-assistant
+run-gitops-assistant:
+    #!/usr/bin/env bash
+    set -e
+    
+    echo "1. Checking/starting background port-forwards for proxy and traces..."
+    # Ensure port forwards are running in the background. We suppress output if they are already running.
+    kubectl port-forward -n litellm-proxy svc/litellm-proxy 4000:4000 > /dev/null 2>&1 &
+    kubectl port-forward -n arize-phoenix svc/arize-phoenix-svc 6006:6006 > /dev/null 2>&1 &
+    
+    echo "2. Fetching LiteLLM API Key..."
+    export LITELLM_API_KEY=$(kubectl get secret -n litellm-proxy litellm-proxy-masterkey -o jsonpath="{.data.masterkey}" | base64 -d)
+    
+    echo "3. Setting environment variables..."
+    export LITELLM_PROXY_URL="http://localhost:4000"
+    export LITELLM_MODEL="gemini-3.1-flash-lite-preview"
+    export PHOENIX_COLLECTOR_HTTP_ENDPOINT="http://localhost:6006/v1/traces"
+    
+    echo "4. Running Chainlit application..."
+    cd apps/gitops-assistant
+    source .venv/bin/activate
+    chainlit run app.py -w
 # Usage: just stop-port-forward
 stop-port-forward:
     #!/usr/bin/env bash

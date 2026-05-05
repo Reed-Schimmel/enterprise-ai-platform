@@ -6,7 +6,7 @@ This document outlines the architecture and implementation plan for a LangGraph-
 
 The application will be contained within `apps/gitops-assistant/`:
 *   `app.py`: The Chainlit application, LangGraph definition, and tool implementations.
-*   `requirements.txt`: Python dependencies (`chainlit`, `langgraph`, `langchain-openai`, `kubernetes`, `arize-phoenix`).
+*   `requirements.txt`: Python dependencies (`chainlit`, `langgraph`, `langchain-litellm`, `kubernetes`, `arize-phoenix`).
 *   `Dockerfile`: Multi-stage Python 3.11-slim container.
 *   `Chart.yaml` & `values.yaml`: Helm chart definition.
 *   `templates/`: Kubernetes manifests including Deployment, Service, ServiceAccount, ClusterRole, and ClusterRoleBinding.
@@ -29,7 +29,7 @@ The agent will be equipped with the following `@tool` functions:
 ## 4. Orchestration & Observability
 
 *   **Agent Architecture:** A ReAct agent built using LangGraph's `create_react_agent`.
-*   **LLM Provider:** Uses `langchain-openai` pointed at the local LiteLLM proxy (`http://litellm-proxy.litellm-proxy.svc.cluster.local:4000/v1`).
+*   **LLM Provider:** Uses `langchain-litellm` pointed at the local LiteLLM proxy (`http://litellm-proxy.litellm-proxy.svc.cluster.local:4000/v1`).
 *   **Tracing:** Utilizes `arize_phoenix.instrumentation.langchain.LangChainInstrumentor` to stream all agent thoughts, tool calls, and LLM requests to the local Arize-Phoenix instance (`http://arize-phoenix-svc.arize-phoenix.svc.cluster.local:6006/v1/traces`).
 
 ## 5. Deployment Flow
@@ -40,3 +40,26 @@ The agent will be equipped with the following `@tool` functions:
 
 ## 6. Future Expansion (V2)
 *   Integrate a Vector Database (e.g., Qdrant or ChromaDB) to store and retrieve technical documentation related to the stack (ArgoCD, LiteLLM, Phoenix, Kubernetes).
+
+# Documentation
+
+Below are links to documentation which you can webfetch and crawl for extra details
+- [Chainlit](https://docs.chainlit.io/)
+    - [Chainlit Docs Src](https://github.com/Chainlit/docs/tree/main)
+- [LangChain Python SDK Docs](https://docs.langchain.com/oss/python/langchain/overview)
+    - [Reference](https://reference.langchain.com/python/langchain)
+    - [LiteLLM Provider](https://docs.langchain.com/oss/python/integrations/providers/litellm)
+    - [LangGraph Docs](https://docs.langchain.com/oss/python/langgraph/overview)
+- [arize-phoenix sdk docs](https://arize.com/docs/phoenix/sdk-api-reference)
+- [Kubernetes Docs](https://kubernetes.io/docs/home/)
+
+---
+
+Commands
+
+LITELLM_PW=$(kubectl get secret -n litellm-proxy litellm-proxy-masterkey -o jsonpath="{.data.masterkey}" | base64 -d 2>/dev/null || echo "Not found yet")
+
+export LITELLM_PROXY_URL="http://localhost:4000"
+export LITELLM_API_KEY=$(kubectl get secret -n litellm-proxy litellm-proxy-masterkey -o jsonpath="{.data.masterkey}" | base64 -d 2>/dev/null || echo "Not found yet")
+export LITELLM_MODEL="gemini-3.1-flash-lite-preview"
+

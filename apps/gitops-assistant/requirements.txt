@@ -1,0 +1,6 @@
+chainlit>=2.0.0
+langgraph>=0.2.0
+langchain-litellm==0.1.3
+kubernetes==30.1.0
+arize-phoenix==4.20.0
+openinference-instrumentation-langchain
