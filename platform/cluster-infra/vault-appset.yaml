@@ -9,7 +9,7 @@ spec:
   generators:
     - git:
         repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
-        revision: main
+        revision: litellm-upgrade
         files:
           - path: configurations/**/cluster-infra/vault-config.yaml
   goTemplate: true
@@ -29,7 +29,7 @@ spec:
       project: default
       source:
         repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
-        targetRevision: main
+        targetRevision: litellm-upgrade
         path: apps/vault
         helm:
           releaseName: vault
