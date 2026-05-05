@@ -151,11 +151,11 @@ build-gitops-assistant:
     fi
     
     echo "1. Building container image with $CONTAINER_CLI..."
-    $CONTAINER_CLI build -t gitops-assistant:latest -f apps/gitops-assistant/Dockerfile .
+    $CONTAINER_CLI build -t docker.io/library/gitops-assistant:latest -f apps/gitops-assistant/Dockerfile .
     
     echo "2. Saving image to archive..."
     rm -f /tmp/gitops-assistant.tar
-    $CONTAINER_CLI save gitops-assistant:latest -o /tmp/gitops-assistant.tar
+    $CONTAINER_CLI save docker.io/library/gitops-assistant:latest -o /tmp/gitops-assistant.tar
     
     echo "3. Loading image archive into kind cluster..."
     kind load image-archive /tmp/gitops-assistant.tar --name enterprise-ai

@@ -19,4 +19,4 @@ RUN rm -rf /app/repo/.venv /app/repo/.git /app/repo/apps/gitops-assistant/.venv 
 
 EXPOSE 8000
 
-CMD ["chainlit", "run", "app.py", "-h", "0.0.0.0", "-p", "8000"]
+CMD ["chainlit", "run", "app.py", "--host", "0.0.0.0", "--port", "8000"]
