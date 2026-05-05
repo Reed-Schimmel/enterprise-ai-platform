@@ -9,7 +9,7 @@ spec:
   generators:
     - git:
         repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
-        revision: litellm-upgrade
+        revision: main
         files:
           - path: configurations/**/ai-apps/open-webui-config.yaml
   goTemplate: true
@@ -26,7 +26,7 @@ spec:
       project: default
       source:
         repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
-        targetRevision: litellm-upgrade
+        targetRevision: main
         path: apps/open-webui
         helm:
           releaseName: open-webui
