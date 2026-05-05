@@ -175,10 +175,17 @@ if [ -n "${GEMINI_API_KEY}" ] && [ "${GEMINI_API_KEY}" != "your_gemini_api_key_h
   echo "Injecting GitOps Assistant LiteLLM Proxy Master Key into Vault..."
   # TODO: Use a K8s resource (like a Job, CronJob, or Crossplane REST provider) in the litellm-proxy helm chart 
   # to auto-generate a scoped key via LiteLLM's REST API and store it in Vault, instead of hardcoding the master key here.
+  echo "Waiting for litellm-proxy-masterkey to be created by ArgoCD..."
+  until kubectl get secret -n litellm-proxy litellm-proxy-masterkey > /dev/null 2>&1; do
+    sleep 5
+  done
+  
+  LITELLM_MASTER_KEY=$(kubectl get secret -n litellm-proxy litellm-proxy-masterkey -o jsonpath="{.data.masterkey}" | base64 -d)
+
   curl -s -X POST http://localhost:8200/v1/secret/data/ai-agents/gitops-assistant/litellm \
     -H "X-Vault-Token: root" \
     -H "Content-Type: application/json" \
-    -d "{\"data\": {\"api_key\": \"sk-lo5jGkXcKZOwG5lsFk\"}}" > /dev/null
+    -d "{\"data\": {\"api_key\": \"${LITELLM_MASTER_KEY}\"}}" > /dev/null
   echo "Successfully injected GitOps Assistant API Key into Vault at secret/ai-agents/gitops-assistant/litellm"
   
   # Clean up port-forward
