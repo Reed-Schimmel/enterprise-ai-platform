@@ -133,6 +133,39 @@ run-gitops-assistant:
     cd apps/gitops-assistant
     source .venv/bin/activate
     chainlit run app.py -w
+
+# --- Recipe 6: Build and Deploy GitOps Assistant Locally ---
+# Usage: just build-gitops-assistant
+build-gitops-assistant:
+    #!/usr/bin/env bash
+    set -e
+    
+    # Auto-detect container CLI (docker or podman)
+    if command -v docker &> /dev/null; then
+        CONTAINER_CLI="docker"
+    elif command -v podman &> /dev/null; then
+        CONTAINER_CLI="podman"
+    else
+        echo "Error: Neither docker nor podman found."
+        exit 1
+    fi
+    
+    echo "1. Building container image with $CONTAINER_CLI..."
+    $CONTAINER_CLI build -t gitops-assistant:latest -f apps/gitops-assistant/Dockerfile .
+    
+    echo "2. Saving image to archive..."
+    rm -f /tmp/gitops-assistant.tar
+    $CONTAINER_CLI save gitops-assistant:latest -o /tmp/gitops-assistant.tar
+    
+    echo "3. Loading image archive into kind cluster..."
+    kind load image-archive /tmp/gitops-assistant.tar --name enterprise-ai
+    
+    echo "4. Restarting deployment (if it exists) to pick up new image..."
+    kubectl rollout restart deployment/gitops-assistant -n argocd 2>/dev/null || true
+    
+    echo "Done! The image is ready in the cluster."
+
+# --- Recipe 7: Stop Port Forwards ---
 # Usage: just stop-port-forward
 stop-port-forward:
     #!/usr/bin/env bash
