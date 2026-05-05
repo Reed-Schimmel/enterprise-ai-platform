@@ -167,6 +167,8 @@ Within a minute or two, the External Secrets Operator will sync this secret into
 ---
 
 ## TODO:
+- [ ] Automate LiteLLM Key Generation for GitOps Assistant
+    - Use a K8s resource (like a Job, CronJob, or Crossplane REST provider) in the litellm-proxy helm chart to auto-generate a scoped key via LiteLLM's REST API and store it in Vault, instead of hardcoding the master key.
 - [ ] Localhost ingress
     - to make dev easier, to remove the need for the port-forward commands. Lets add an ingress controller of <argocd-app-name>.localhost
 - [x] (maybe something vastly simplier) Open WebUI Helm chart as an ai-app https://github.com/open-webui/helm-charts

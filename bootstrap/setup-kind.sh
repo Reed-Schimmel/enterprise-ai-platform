@@ -163,6 +163,15 @@ if [ -n "${GEMINI_API_KEY}" ] && [ "${GEMINI_API_KEY}" != "your_gemini_api_key_h
     -d "{\"data\": {\"GEMINI_API_KEY\": \"${GEMINI_API_KEY}\"}}" > /dev/null
 
   echo "Successfully injected GEMINI_API_KEY into Vault at secret/litellm/api-keys"
+
+  echo "Injecting GitOps Assistant LiteLLM Proxy Master Key into Vault..."
+  # TODO: Use a K8s resource (like a Job, CronJob, or Crossplane REST provider) in the litellm-proxy helm chart 
+  # to auto-generate a scoped key via LiteLLM's REST API and store it in Vault, instead of hardcoding the master key here.
+  curl -s -X POST http://localhost:8200/v1/secret/data/ai-agents/gitops-assistant/litellm \
+    -H "X-Vault-Token: root" \
+    -H "Content-Type: application/json" \
+    -d "{\"data\": {\"api_key\": \"sk-lo5jGkXcKZOwG5lsFk\"}}" > /dev/null
+  echo "Successfully injected GitOps Assistant API Key into Vault at secret/ai-agents/gitops-assistant/litellm"
   
   # Clean up port-forward
   if kill -0 $VAULT_PF_PID 2>/dev/null; then
