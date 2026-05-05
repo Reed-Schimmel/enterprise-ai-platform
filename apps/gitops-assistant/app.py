@@ -98,7 +98,8 @@ llm = ChatLiteLLM(
     model=model_name,
     api_base=proxy_url,
     api_key=api_key,
-    streaming=True
+    streaming=True,
+    custom_llm_provider="openai"
 )
 
 agent_executor = create_react_agent(llm, tools)
@@ -120,7 +121,7 @@ async def on_message(message: cl.Message):
     agent = cl.user_session.get("app_agent")
     
     cb = cl.AsyncLangchainCallbackHandler(
-        stream_final_answer=True,
+        stream_final_answer=False,
     )
     
     inputs = {"messages": [HumanMessage(content=message.content)]}
@@ -130,4 +131,6 @@ async def on_message(message: cl.Message):
     # but here we are doing a simpler pass-through. For full history, we would append to session state.
     res = await agent.ainvoke(inputs, config={"callbacks": [cb]})
     
-    # Langchain callback handler already streams the final answer, so we don't need to send it again manually.
+    # Extract final message from LangGraph output
+    final_message = res["messages"][-1].content
+    await cl.Message(content=final_message).send()
