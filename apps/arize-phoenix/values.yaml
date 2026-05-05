@@ -1,4 +1,4 @@
-phoenix:
+phoenix-helm:
   replicaCount: 1
 
   server:

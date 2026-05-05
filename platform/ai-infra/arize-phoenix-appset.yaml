@@ -29,7 +29,7 @@ spec:
           releaseName: arize-phoenix
           values: |
             {{- if .values }}
-            phoenix:
+            phoenix-helm:
               {{- toYaml .values | nindent 14 }}
             {{- end }}
       destination:

@@ -3,4 +3,4 @@ kind: ConfigMap
 metadata:
   name: litellm-otel-env
 data:
-  OTEL_EXPORTER_OTLP_ENDPOINT: "http://arize-phoenix-phoenix-svc.arize-phoenix.svc.cluster.local:4317"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://arize-phoenix-svc.arize-phoenix.svc.cluster.local:4317"

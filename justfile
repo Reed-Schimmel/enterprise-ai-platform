@@ -78,7 +78,7 @@ port-forward:
     kubectl port-forward -n vault svc/vault 8200:8200 > /dev/null 2>&1 &
     kubectl port-forward -n litellm-proxy svc/litellm-proxy 4000:4000 > /dev/null 2>&1 &
     kubectl port-forward -n open-webui svc/open-webui 3000:80 > /dev/null 2>&1 &
-    kubectl port-forward -n arize-phoenix svc/arize-phoenix-phoenix-svc 6006:6006 > /dev/null 2>&1 &
+    kubectl port-forward -n arize-phoenix svc/arize-phoenix-svc 6006:6006 > /dev/null 2>&1 &
     
     echo "Wait a few seconds for port-forwards to establish..."
     sleep 3

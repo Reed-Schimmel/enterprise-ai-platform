@@ -2,6 +2,6 @@ apiVersion: v2
 name: arize-phoenix
 version: 1.0.0
 dependencies:
-  - name: phoenix
-    repository: oci://registry-1.docker.io/arizephoenix/phoenix-helm
+  - name: phoenix-helm
+    repository: oci://registry-1.docker.io/arizephoenix
     version: 7.0.2
