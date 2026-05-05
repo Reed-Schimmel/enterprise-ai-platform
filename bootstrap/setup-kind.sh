@@ -97,7 +97,9 @@ else
 fi
 
 # Kill the background port-forward process and remove the trap
-kill $PF_PID
+if kill -0 $PF_PID 2>/dev/null; then
+  kill $PF_PID 2>/dev/null || true
+fi
 trap - EXIT
 
 
@@ -124,6 +126,52 @@ fi
 # 5. Apply the root App of Apps
 echo "Applying ArgoCD root application..."
 kubectl apply -f bootstrap/root.yaml
+
+# 6. Automate Vault LiteLLM API Key Injection
+if [ -n "${GEMINI_API_KEY}" ] && [ "${GEMINI_API_KEY}" != "your_gemini_api_key_here" ]; then
+  echo "GEMINI_API_KEY detected. Waiting for Vault to be deployed by ArgoCD..."
+  
+  # Wait for Vault Application to be created by AppSet
+  until kubectl get application kind-enterprise-ai-vault -n argocd > /dev/null 2>&1; do
+    echo "Waiting for kind-enterprise-ai-vault Application to exist..."
+    sleep 5
+  done
+
+  # Wait for Vault Application to be synced
+  echo "Waiting for Vault Application to sync..."
+  until [ "$(kubectl get application kind-enterprise-ai-vault -n argocd -o jsonpath='{.status.sync.status}' 2>/dev/null)" = "Synced" ]; do
+    sleep 5
+  done
+
+  # Wait for Vault Pod to be ready
+  echo "Waiting for Vault pod to be ready..."
+  kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=vault -n vault --timeout=300s
+
+  echo "Injecting API keys into Vault via REST API..."
+  # Start temporary port-forward
+  kubectl port-forward svc/vault -n vault 8200:8200 > /dev/null 2>&1 &
+  VAULT_PF_PID=$!
+  trap "kill $VAULT_PF_PID 2>/dev/null || true" EXIT
+
+  # Wait for port-forward to establish
+  sleep 5
+
+  # Execute REST API POST
+  curl -s -X POST http://localhost:8200/v1/secret/data/litellm/api-keys \
+    -H "X-Vault-Token: root" \
+    -H "Content-Type: application/json" \
+    -d "{\"data\": {\"GEMINI_API_KEY\": \"${GEMINI_API_KEY}\"}}" > /dev/null
+
+  echo "Successfully injected GEMINI_API_KEY into Vault at secret/litellm/api-keys"
+  
+  # Clean up port-forward
+  if kill -0 $VAULT_PF_PID 2>/dev/null; then
+    kill $VAULT_PF_PID 2>/dev/null || true
+  fi
+  trap - EXIT
+else
+  echo "Skipping Vault API key injection (GEMINI_API_KEY not set)."
+fi
 
 echo "====================================================================="
 echo "Bootstrap complete!"
