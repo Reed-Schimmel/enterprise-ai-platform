@@ -3,4 +3,5 @@ kind: ConfigMap
 metadata:
   name: litellm-otel-env
 data:
-  OTEL_EXPORTER_OTLP_ENDPOINT: "http://arize-phoenix-svc.arize-phoenix.svc.cluster.local:4317"
+  PHOENIX_COLLECTOR_HTTP_ENDPOINT: "http://arize-phoenix-svc.arize-phoenix.svc.cluster.local:6006/v1/traces"
+  PHOENIX_PROJECT_NAME: "enterprise-ai-platform"

@@ -73,8 +73,8 @@ litellm-helm:
   proxy_config:
     litellm_settings:
       drop_params: true # drop unsupported params instead of throwing an error.
-      success_callback: ["otel"]
-      failure_callback: ["otel"]
+      success_callback: ["arize_phoenix"]
+      failure_callback: ["arize_phoenix"]
       # callbacks:
       #   - prometheus
     model_list:
