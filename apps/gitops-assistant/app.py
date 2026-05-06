@@ -14,17 +14,31 @@ if os.environ.get("PHOENIX_COLLECTOR_HTTP_ENDPOINT"):
     except Exception as e:
         print(f"Failed to initialize Phoenix tracing: {e}")
 
+# --- Kubernetes Setup ---
+try:
+    from kubernetes import client, config
+    try:
+        config.load_incluster_config()
+    except config.config_exception.ConfigException:
+        config.load_kube_config()
+    k8s_initialized = True
+except Exception as e:
+    print(f"Failed to initialize Kubernetes client: {e}")
+    k8s_initialized = False
+
 # --- Tools ---
 @tool
 def read_local_file(filepath: str) -> str:
     """Reads the contents of a local file in the repository.
     The repository is mounted at /app/repo inside the container."""
     # Ensure the path is somewhat safe and relative to /app/repo if not absolute
-    if not filepath.startswith("/"):
-        filepath = os.path.join("/app/repo", filepath)
+    safe_path = filepath.lstrip("/")
+    abspath = os.path.abspath(os.path.join("/app/repo", safe_path))
+    if not abspath.startswith("/app/repo"):
+        return "Error: Path traversal is not allowed."
     
     try:
-        with open(filepath, 'r') as f:
+        with open(abspath, 'r') as f:
             return f.read()
     except Exception as e:
         return f"Error reading file {filepath}: {e}"
@@ -33,11 +47,13 @@ def read_local_file(filepath: str) -> str:
 def list_directory(path: str) -> str:
     """Lists the contents of a directory in the repository.
     The repository is mounted at /app/repo inside the container."""
-    if not path.startswith("/"):
-        path = os.path.join("/app/repo", path)
+    safe_path = path.lstrip("/")
+    abspath = os.path.abspath(os.path.join("/app/repo", safe_path))
+    if not abspath.startswith("/app/repo"):
+        return "Error: Path traversal is not allowed."
         
     try:
-        files = os.listdir(path)
+        files = os.listdir(abspath)
         return "\n".join(files)
     except Exception as e:
         return f"Error listing directory {path}: {e}"
@@ -46,14 +62,10 @@ def list_directory(path: str) -> str:
 def kubectl_get(resource_type: str, namespace: str = "default") -> str:
     """Gets Kubernetes resources of a specific type in a namespace.
     Valid resource_type examples: 'pods', 'services', 'deployments', 'ingresses'"""
-    from kubernetes import client, config
-    try:
-        try:
-            config.load_incluster_config()
-        except config.config_exception.ConfigException:
-            # Fallback for local testing outside cluster (requires local ~/.kube/config)
-            config.load_kube_config()
+    if not k8s_initialized:
+        return "Error: Kubernetes client is not initialized."
         
+    try:
         # We need to map generic resource strings to API calls. 
         # For simplicity, using a dynamic approach with the CustomObjectsApi or specific core APIs
         # A more robust agent would have more granular tools or use a raw API caller.
