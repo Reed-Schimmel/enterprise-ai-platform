@@ -31,11 +31,12 @@ except Exception as e:
 @tool
 def read_local_file(filepath: str) -> str:
     """Reads the contents of a local file in the repository.
-    The repository is mounted at /app/repo inside the container."""
-    # Ensure the path is somewhat safe and relative to /app/repo if not absolute
+    The repository is mounted at REPO_PATH inside the container."""
+    # Ensure the path is somewhat safe and relative to REPO_PATH if not absolute
+    repo_root = os.environ.get("REPO_PATH", "/app/repo")
     safe_path = filepath.lstrip("/")
-    abspath = os.path.abspath(os.path.join("/app/repo", safe_path))
-    if not abspath.startswith("/app/repo"):
+    abspath = os.path.abspath(os.path.join(repo_root, safe_path))
+    if not abspath.startswith(repo_root):
         return "Error: Path traversal is not allowed."
     
     try:
@@ -47,10 +48,11 @@ def read_local_file(filepath: str) -> str:
 @tool
 def list_directory(path: str) -> str:
     """Lists the contents of a directory in the repository.
-    The repository is mounted at /app/repo inside the container."""
+    The repository is mounted at REPO_PATH inside the container."""
+    repo_root = os.environ.get("REPO_PATH", "/app/repo")
     safe_path = path.lstrip("/")
-    abspath = os.path.abspath(os.path.join("/app/repo", safe_path))
-    if not abspath.startswith("/app/repo"):
+    abspath = os.path.abspath(os.path.join(repo_root, safe_path))
+    if not abspath.startswith(repo_root):
         return "Error: Path traversal is not allowed."
         
     try:

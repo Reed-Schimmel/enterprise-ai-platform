@@ -132,9 +132,14 @@ run-gitops-assistant:
     export LITELLM_PROXY_URL="http://localhost:4000"
     export LITELLM_MODEL="gemini-3.1-flash-lite-preview"
     export PHOENIX_COLLECTOR_HTTP_ENDPOINT="http://localhost:6006/v1/traces"
+    export REPO_PATH="$(pwd)"
     
-    echo "4. Running Chainlit application..."
+    echo "4. Setting up Python environment..."
     cd apps/gitops-assistant
+    uv venv
+    uv pip install -r requirements.txt
+    
+    echo "5. Running Chainlit application..."
     source .venv/bin/activate
     chainlit run app.py -w
 
