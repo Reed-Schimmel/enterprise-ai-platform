@@ -20,9 +20,6 @@ COPY apps/gitops-assistant/.chainlit .chainlit
 # (Assuming the docker build context is the repository root)
 COPY . /app/repo
 
-# Remove the virtual environment and git history from the copied repo to save space
-RUN rm -rf /app/repo/.venv /app/repo/.git /app/repo/apps/gitops-assistant/.venv || true
-
 EXPOSE 8000
 
 CMD ["chainlit", "run", "app.py", "--host", "0.0.0.0", "--port", "8000"]
