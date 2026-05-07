@@ -154,6 +154,18 @@ done
 echo "Waiting for Vault pod to be ready..."
 kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=vault -n vault --timeout=300s
 
+echo "Waiting for litellm-proxy-masterkey to be created by ArgoCD..."
+MAX_RETRIES=60
+RETRY_COUNT=0
+until kubectl get secret -n litellm-proxy litellm-proxy-masterkey > /dev/null 2>&1; do
+  if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
+    echo "Timeout waiting for litellm-proxy-masterkey"
+    break
+  fi
+  sleep 5
+  RETRY_COUNT=$((RETRY_COUNT+1))
+done
+
 echo "Injecting API keys into Vault via REST API..."
 # Start temporary port-forward
 kubectl port-forward svc/vault -n vault 8200:8200 > /dev/null 2>&1 &
@@ -178,18 +190,6 @@ fi
 echo "Injecting GitOps Assistant LiteLLM Proxy Master Key into Vault..."
 # TODO: Use a K8s resource (like a Job, CronJob, or Crossplane REST provider) in the litellm-proxy helm chart 
 # to auto-generate a scoped key via LiteLLM's REST API and store it in Vault, instead of hardcoding the master key here.
-echo "Waiting for litellm-proxy-masterkey to be created by ArgoCD..."
-MAX_RETRIES=60
-RETRY_COUNT=0
-until kubectl get secret -n litellm-proxy litellm-proxy-masterkey > /dev/null 2>&1; do
-  if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
-    echo "Timeout waiting for litellm-proxy-masterkey"
-    break
-  fi
-  sleep 5
-  RETRY_COUNT=$((RETRY_COUNT+1))
-done
-
 if kubectl get secret -n litellm-proxy litellm-proxy-masterkey > /dev/null 2>&1; then
   LITELLM_MASTER_KEY=$(kubectl get secret -n litellm-proxy litellm-proxy-masterkey -o jsonpath="{.data.masterkey}" | base64 -d)
 
