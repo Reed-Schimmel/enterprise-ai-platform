@@ -1,0 +1,21 @@
+# Ignore Git and virtual environments
+.git/
+.venv/
+__pycache__/
+*.pyc
+
+# Ignore secrets and environment files
+.env
+*.env
+bootstrap/.env
+secret*
+*.pem
+*.key
+
+# Ignore local chainlit artifacts
+apps/gitops-assistant/.chainlit/translations/
+apps/gitops-assistant/chainlit.md
+
+# Ignore built charts/tarballs
+*.tgz
+/tmp/

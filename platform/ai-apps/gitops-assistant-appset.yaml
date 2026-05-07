@@ -1,0 +1,43 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: gitops-assistant
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: gitops-assistant-appset
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
+        revision: main
+        files:
+          - path: configurations/**/ai-apps/gitops-assistant-config.yaml
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  template:
+    metadata:
+      name: '{{ .path.basenameNormalized }}-gitops-assistant'
+      labels:
+        app.kubernetes.io/name: gitops-assistant
+        app.kubernetes.io/instance: '{{ .path.basenameNormalized }}'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/Reed-Schimmel/enterprise-ai-platform.git
+        targetRevision: '{{ .targetRevision }}'
+        path: apps/gitops-assistant
+        helm:
+          valueFiles:
+            - values.yaml
+          values: |-
+            {{ .config }}
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: argocd
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ApplyOutOfSyncOnly=true

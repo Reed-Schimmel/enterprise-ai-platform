@@ -123,39 +123,47 @@ else
   echo "Skipping Docker image pull secret creation (DOCKER_USERNAME or DOCKER_PASSWORD not set)."
 fi
 
-# 5. Apply the root App of Apps
+# 5. Build and Load GitOps Assistant Image
+echo "Building and loading GitOps Assistant image into cluster..."
+if command -v just >/dev/null 2>&1; then
+  just build-gitops-assistant
+else
+  echo "Warning: 'just' is not installed. You must manually build and load the gitops-assistant docker image."
+fi
+
+# 6. Apply the root App of Apps
 echo "Applying ArgoCD root application..."
 kubectl apply -f bootstrap/root.yaml
 
-# 6. Automate Vault LiteLLM API Key Injection
-if [ -n "${GEMINI_API_KEY}" ] && [ "${GEMINI_API_KEY}" != "your_gemini_api_key_here" ]; then
-  echo "GEMINI_API_KEY detected. Waiting for Vault to be deployed by ArgoCD..."
-  
-  # Wait for Vault Application to be created by AppSet
-  until kubectl get application kind-enterprise-ai-vault -n argocd > /dev/null 2>&1; do
-    echo "Waiting for kind-enterprise-ai-vault Application to exist..."
-    sleep 5
-  done
+# 7. Automate Vault API Key Injection
+echo "Waiting for Vault to be deployed by ArgoCD..."
 
-  # Wait for Vault Application to be synced
-  echo "Waiting for Vault Application to sync..."
-  until [ "$(kubectl get application kind-enterprise-ai-vault -n argocd -o jsonpath='{.status.sync.status}' 2>/dev/null)" = "Synced" ]; do
-    sleep 5
-  done
-
-  # Wait for Vault Pod to be ready
-  echo "Waiting for Vault pod to be ready..."
-  kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=vault -n vault --timeout=300s
-
-  echo "Injecting API keys into Vault via REST API..."
-  # Start temporary port-forward
-  kubectl port-forward svc/vault -n vault 8200:8200 > /dev/null 2>&1 &
-  VAULT_PF_PID=$!
-  trap "kill $VAULT_PF_PID 2>/dev/null || true" EXIT
-
-  # Wait for port-forward to establish
+# Wait for Vault Application to be created by AppSet
+until kubectl get application kind-enterprise-ai-vault -n argocd > /dev/null 2>&1; do
+  echo "Waiting for kind-enterprise-ai-vault Application to exist..."
   sleep 5
+done
 
+# Wait for Vault Application to be synced
+echo "Waiting for Vault Application to sync..."
+until [ "$(kubectl get application kind-enterprise-ai-vault -n argocd -o jsonpath='{.status.sync.status}' 2>/dev/null)" = "Synced" ]; do
+  sleep 5
+done
+
+# Wait for Vault Pod to be ready
+echo "Waiting for Vault pod to be ready..."
+kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=vault -n vault --timeout=300s
+
+echo "Injecting API keys into Vault via REST API..."
+# Start temporary port-forward
+kubectl port-forward svc/vault -n vault 8200:8200 > /dev/null 2>&1 &
+VAULT_PF_PID=$!
+trap "kill $VAULT_PF_PID 2>/dev/null || true" EXIT
+
+# Wait for port-forward to establish
+sleep 5
+
+if [ -n "${GEMINI_API_KEY}" ] && [ "${GEMINI_API_KEY}" != "your_gemini_api_key_here" ]; then
   # Execute REST API POST
   curl -s -X POST http://localhost:8200/v1/secret/data/litellm/api-keys \
     -H "X-Vault-Token: root" \
@@ -163,14 +171,53 @@ if [ -n "${GEMINI_API_KEY}" ] && [ "${GEMINI_API_KEY}" != "your_gemini_api_key_h
     -d "{\"data\": {\"GEMINI_API_KEY\": \"${GEMINI_API_KEY}\"}}" > /dev/null
 
   echo "Successfully injected GEMINI_API_KEY into Vault at secret/litellm/api-keys"
+else
+  echo "Skipping GEMINI_API_KEY injection (not set)."
+fi
+
+# Clean up port-forward
+if kill -0 $VAULT_PF_PID 2>/dev/null; then
+  kill $VAULT_PF_PID 2>/dev/null || true
+fi
+trap - EXIT
+
+echo "Waiting for litellm-proxy-masterkey to be created by ArgoCD..."
+MAX_RETRIES=60
+RETRY_COUNT=0
+until kubectl get secret -n litellm-proxy litellm-proxy-masterkey > /dev/null 2>&1; do
+  if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
+    echo "Timeout waiting for litellm-proxy-masterkey"
+    break
+  fi
+  sleep 5
+  RETRY_COUNT=$((RETRY_COUNT+1))
+done
+
+echo "Injecting GitOps Assistant LiteLLM Proxy Master Key into Vault..."
+# TODO: Use a K8s resource (like a Job, CronJob, or Crossplane REST provider) in the litellm-proxy helm chart 
+# to auto-generate a scoped key via LiteLLM's REST API and store it in Vault, instead of hardcoding the master key here.
+if kubectl get secret -n litellm-proxy litellm-proxy-masterkey > /dev/null 2>&1; then
+  LITELLM_MASTER_KEY=$(kubectl get secret -n litellm-proxy litellm-proxy-masterkey -o jsonpath="{.data.masterkey}" | base64 -d)
+
+  # Start another temporary port-forward
+  kubectl port-forward svc/vault -n vault 8200:8200 > /dev/null 2>&1 &
+  VAULT_PF_PID2=$!
+  trap "kill $VAULT_PF_PID2 2>/dev/null || true" EXIT
   
-  # Clean up port-forward
-  if kill -0 $VAULT_PF_PID 2>/dev/null; then
-    kill $VAULT_PF_PID 2>/dev/null || true
+  sleep 5
+
+  curl -s -X POST http://localhost:8200/v1/secret/data/ai-agents/gitops-assistant/litellm \
+    -H "X-Vault-Token: root" \
+    -H "Content-Type: application/json" \
+    -d "{\"data\": {\"api_key\": \"${LITELLM_MASTER_KEY}\"}}" > /dev/null
+  echo "Successfully injected GitOps Assistant API Key into Vault at secret/ai-agents/gitops-assistant/litellm"
+  
+  if kill -0 $VAULT_PF_PID2 2>/dev/null; then
+    kill $VAULT_PF_PID2 2>/dev/null || true
   fi
   trap - EXIT
 else
-  echo "Skipping Vault API key injection (GEMINI_API_KEY not set)."
+  echo "Failed to get litellm-proxy-masterkey, skipping Vault injection for GitOps Assistant"
 fi
 
 echo "====================================================================="

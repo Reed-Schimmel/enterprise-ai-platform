@@ -1,3 +1,13 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Chainlit
+apps/gitops-assistant/.chainlit/translations/
+apps/gitops-assistant/chainlit.md
+
+# Other
 bootstrap/.env
 *.tgz
 Chart.lock

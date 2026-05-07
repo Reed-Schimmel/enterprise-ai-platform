@@ -1,0 +1,30 @@
+replicaCount: 1
+
+image:
+  repository: gitops-assistant
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+serviceAccount:
+  create: true
+  name: "gitops-assistant-sa"
+
+service:
+  type: ClusterIP
+  port: 8000
+
+env:
+  LITELLM_PROXY_URL: "http://litellm-proxy.litellm-proxy.svc.cluster.local:4000"
+  LITELLM_MODEL: "gemini-3.1-flash-lite-preview"
+  PHOENIX_COLLECTOR_HTTP_ENDPOINT: "http://arize-phoenix-svc.arize-phoenix.svc.cluster.local:6006/v1/traces"
+
+secretEnv:
+  LITELLM_API_KEY: ""
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi

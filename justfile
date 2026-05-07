@@ -79,6 +79,7 @@ port-forward:
     kubectl port-forward -n litellm-proxy svc/litellm-proxy 4000:4000 > /dev/null 2>&1 &
     kubectl port-forward -n open-webui svc/open-webui 3000:80 > /dev/null 2>&1 &
     kubectl port-forward -n arize-phoenix svc/arize-phoenix-svc 6006:6006 > /dev/null 2>&1 &
+    kubectl port-forward -n argocd svc/gitops-assistant 8000:8000 > /dev/null 2>&1 &
     
     echo "Wait a few seconds for port-forwards to establish..."
     sleep 3
@@ -107,10 +108,73 @@ port-forward:
     echo ""
     
     echo "5. Arize-Phoenix: http://localhost:6006"
+    echo ""
+    
+    echo "6. GitOps Assistant: http://localhost:8000"
     echo "-----------------------------------------------------"
     echo "To stop port-forwards, run: just stop-port-forward"
 
-# --- Recipe 4: Stop Port Forwards ---
+# --- Recipe 5: Run GitOps Assistant Locally ---
+# Usage: just run-gitops-assistant
+run-gitops-assistant:
+    #!/usr/bin/env bash
+    set -e
+    
+    echo "1. Checking/starting background port-forwards for proxy and traces..."
+    # Ensure port forwards are running in the background. We suppress output if they are already running.
+    kubectl port-forward -n litellm-proxy svc/litellm-proxy 4000:4000 > /dev/null 2>&1 &
+    kubectl port-forward -n arize-phoenix svc/arize-phoenix-svc 6006:6006 > /dev/null 2>&1 &
+    
+    echo "2. Fetching LiteLLM API Key..."
+    export LITELLM_API_KEY=$(kubectl get secret -n litellm-proxy litellm-proxy-masterkey -o jsonpath="{.data.masterkey}" | base64 -d)
+    
+    echo "3. Setting environment variables..."
+    export LITELLM_PROXY_URL="http://localhost:4000"
+    export LITELLM_MODEL="gemini-3.1-flash-lite-preview"
+    export PHOENIX_COLLECTOR_HTTP_ENDPOINT="http://localhost:6006/v1/traces"
+    export REPO_PATH="$(pwd)"
+    
+    echo "4. Setting up Python environment..."
+    cd apps/gitops-assistant
+    uv venv
+    uv pip install -r requirements.txt
+    
+    echo "5. Running Chainlit application..."
+    source .venv/bin/activate
+    chainlit run app.py -w
+
+# --- Recipe 6: Build and Deploy GitOps Assistant Locally ---
+# Usage: just build-gitops-assistant
+build-gitops-assistant:
+    #!/usr/bin/env bash
+    set -e
+    
+    # Auto-detect container CLI (docker or podman)
+    if command -v docker &> /dev/null; then
+        CONTAINER_CLI="docker"
+    elif command -v podman &> /dev/null; then
+        CONTAINER_CLI="podman"
+    else
+        echo "Error: Neither docker nor podman found."
+        exit 1
+    fi
+    
+    echo "1. Building container image with $CONTAINER_CLI..."
+    $CONTAINER_CLI build -t docker.io/library/gitops-assistant:latest -f apps/gitops-assistant/Dockerfile .
+    
+    echo "2. Saving image to archive..."
+    rm -f /tmp/gitops-assistant.tar
+    $CONTAINER_CLI save docker.io/library/gitops-assistant:latest -o /tmp/gitops-assistant.tar
+    
+    echo "3. Loading image archive into kind cluster..."
+    kind load image-archive /tmp/gitops-assistant.tar --name enterprise-ai
+    
+    echo "4. Restarting deployment (if it exists) to pick up new image..."
+    kubectl rollout restart deployment/gitops-assistant -n argocd 2>/dev/null || true
+    
+    echo "Done! The image is ready in the cluster."
+
+# --- Recipe 7: Stop Port Forwards ---
 # Usage: just stop-port-forward
 stop-port-forward:
     #!/usr/bin/env bash
