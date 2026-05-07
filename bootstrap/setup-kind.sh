@@ -154,18 +154,6 @@ done
 echo "Waiting for Vault pod to be ready..."
 kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=vault -n vault --timeout=300s
 
-echo "Waiting for litellm-proxy-masterkey to be created by ArgoCD..."
-MAX_RETRIES=60
-RETRY_COUNT=0
-until kubectl get secret -n litellm-proxy litellm-proxy-masterkey > /dev/null 2>&1; do
-  if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
-    echo "Timeout waiting for litellm-proxy-masterkey"
-    break
-  fi
-  sleep 5
-  RETRY_COUNT=$((RETRY_COUNT+1))
-done
-
 echo "Injecting API keys into Vault via REST API..."
 # Start temporary port-forward
 kubectl port-forward svc/vault -n vault 8200:8200 > /dev/null 2>&1 &
@@ -187,26 +175,50 @@ else
   echo "Skipping GEMINI_API_KEY injection (not set)."
 fi
 
+# Clean up port-forward
+if kill -0 $VAULT_PF_PID 2>/dev/null; then
+  kill $VAULT_PF_PID 2>/dev/null || true
+fi
+trap - EXIT
+
+echo "Waiting for litellm-proxy-masterkey to be created by ArgoCD..."
+MAX_RETRIES=60
+RETRY_COUNT=0
+until kubectl get secret -n litellm-proxy litellm-proxy-masterkey > /dev/null 2>&1; do
+  if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
+    echo "Timeout waiting for litellm-proxy-masterkey"
+    break
+  fi
+  sleep 5
+  RETRY_COUNT=$((RETRY_COUNT+1))
+done
+
 echo "Injecting GitOps Assistant LiteLLM Proxy Master Key into Vault..."
 # TODO: Use a K8s resource (like a Job, CronJob, or Crossplane REST provider) in the litellm-proxy helm chart 
 # to auto-generate a scoped key via LiteLLM's REST API and store it in Vault, instead of hardcoding the master key here.
 if kubectl get secret -n litellm-proxy litellm-proxy-masterkey > /dev/null 2>&1; then
   LITELLM_MASTER_KEY=$(kubectl get secret -n litellm-proxy litellm-proxy-masterkey -o jsonpath="{.data.masterkey}" | base64 -d)
 
+  # Start another temporary port-forward
+  kubectl port-forward svc/vault -n vault 8200:8200 > /dev/null 2>&1 &
+  VAULT_PF_PID2=$!
+  trap "kill $VAULT_PF_PID2 2>/dev/null || true" EXIT
+  
+  sleep 5
+
   curl -s -X POST http://localhost:8200/v1/secret/data/ai-agents/gitops-assistant/litellm \
     -H "X-Vault-Token: root" \
     -H "Content-Type: application/json" \
     -d "{\"data\": {\"api_key\": \"${LITELLM_MASTER_KEY}\"}}" > /dev/null
   echo "Successfully injected GitOps Assistant API Key into Vault at secret/ai-agents/gitops-assistant/litellm"
+  
+  if kill -0 $VAULT_PF_PID2 2>/dev/null; then
+    kill $VAULT_PF_PID2 2>/dev/null || true
+  fi
+  trap - EXIT
 else
   echo "Failed to get litellm-proxy-masterkey, skipping Vault injection for GitOps Assistant"
 fi
-
-# Clean up port-forward
-if kill -0 $VAULT_PF_PID 2>/dev/null; then
-  kill $VAULT_PF_PID 2>/dev/null || true
-fi
-trap - EXIT
 
 echo "====================================================================="
 echo "Bootstrap complete!"
