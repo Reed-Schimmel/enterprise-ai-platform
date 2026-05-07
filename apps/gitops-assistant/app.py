@@ -4,6 +4,7 @@ from langchain_litellm import ChatLiteLLM
 from langchain_core.messages import HumanMessage
 from langchain_core.tools import tool
 from langgraph.prebuilt import create_react_agent
+from langgraph.checkpoint.memory import MemorySaver
 
 # Set up Phoenix Tracing
 if os.environ.get("PHOENIX_COLLECTOR_HTTP_ENDPOINT"):
@@ -114,7 +115,8 @@ llm = ChatLiteLLM(
     custom_llm_provider="openai"
 )
 
-agent_executor = create_react_agent(llm, tools)
+memory = MemorySaver()
+agent_executor = create_react_agent(llm, tools, checkpointer=memory)
 
 # --- Chainlit UI ---
 @cl.on_chat_start
@@ -136,12 +138,17 @@ async def on_message(message: cl.Message):
         stream_final_answer=False,
     )
     
+    config = {
+        "callbacks": [cb],
+        "configurable": {"thread_id": cl.context.session.id}
+    }
+    
     inputs = {"messages": [HumanMessage(content=message.content)]}
     
     # We must await the ainovke. The callback handler handles the UI streaming.
     # Note: langgraph create_react_agent handles message history if configured with a checkpointer, 
     # but here we are doing a simpler pass-through. For full history, we would append to session state.
-    res = await agent.ainvoke(inputs, config={"callbacks": [cb]})
+    res = await agent.ainvoke(inputs, config=config)
     
     # Extract final message from LangGraph output
     final_message = res["messages"][-1].content
